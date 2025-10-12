@@ -44,6 +44,9 @@ Watch the demo video showing the full workflow:
 👉 Watch Demo Video on YouTube
 
 ⚙️ Installation & Setup (Collaborator-Friendly)
+
+Follow these steps to run MedPlus locally — even for collaborators using VS Code.
+
 1️⃣ Clone the Repository
 
 Option A — Terminal / PowerShell:
@@ -74,14 +77,14 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 
-Tip: “(.venv)” should appear in the terminal if activated.
+Tip: You should see (.venv) in your terminal if activation succeeded.
 
 3️⃣ Install Dependencies
 pip install -r requirements.txt
 
 4️⃣ Configure Environment Variables
 
-Copy .env.example to .env:
+Copy .env.example to .env
 
 Windows:
 
@@ -120,19 +123,17 @@ ACCOUNT_EMAIL_VERIFICATION=none
 
 
 Important: Only the collaborator’s .env contains real credentials.
-.env.example has placeholders and is safe to commit on GitHub.
+.env.example has placeholders and is safe for GitHub.
 
 Tips for generating credentials:
 
 Gmail App Password: https://myaccount.google.com/apppasswords
-
-(Requires 2-Step Verification enabled)
+ (requires 2-Step Verification)
 
 Stripe Keys: https://dashboard.stripe.com/test/apikeys
+ (use test keys)
 
-Use test keys for development.
-
-Google OAuth: Google Cloud Console → Credentials
+Google OAuth: https://console.cloud.google.com/apis/credentials
 
 Redirect URI: http://127.0.0.1:8000/accounts/google/login/callback/
 
@@ -160,23 +161,23 @@ Open http://<PC_IP>:8000 on your phone.
 
 Accept GitHub invite
 
-Clone repo (terminal or VS Code)
+Clone repository (terminal or VS Code)
 
 Create & activate virtual environment
 
 Install dependencies
 
-Copy .env.example → .env and fill credentials (optional: email/Stripe/Google)
+Copy .env.example → .env and fill credentials (optional)
 
-Run migrations
+Run migrations → python manage.py migrate
 
 Create superuser (optional)
 
 Run server → test locally
 
-Open in browser → http://127.0.0.1:8000
+Open browser → http://127.0.0.1:8000
 
-Edit and push changes through feature branch → open Pull Request
+Push changes via feature branch → open Pull Request
 
 💻 VS Code Setup (Recommended)
 
@@ -190,7 +191,7 @@ Install dependencies
 
 Run server (python manage.py runserver)
 
-Ctrl + Click link in terminal to open in browser
+Ctrl + Click link in terminal to open browser
 
 Select interpreter: Ctrl + Shift + P → “Python: Select Interpreter” → choose .venv
 
@@ -217,33 +218,12 @@ MIT License © 2025 MedPlus
 
 🧩 Notes — Generating Credentials
 
-Email App Password (for Gmail notifications) → https://myaccount.google.com/apppasswords
-
-(2-Step Verification required)
+Email App Password (Gmail) → https://myaccount.google.com/apppasswords
 
 Stripe API Keys → https://dashboard.stripe.com/test/apikeys
 
-Use test keys in .env.
-
 Google OAuth → https://console.cloud.google.com/apis/credentials
 
-Add redirect URI: http://127.0.0.1:8000/accounts/google/login/callback/
+Redirect URI: http://127.0.0.1:8000/accounts/google/login/callback/
 
 You can leave email, Stripe, and Google OAuth blank — the app will still run locally.
-
-To remove any large demo video safely:
-
-git rm --cached demo/medplus-demo.mp4
-git commit -m "Remove large demo video, use YouTube link"
-git push origin main
-
-✅ Quick Commands Summary
-Task	Command
-Clone repo	git clone https://github.com/zuh2407/pharmacy_app.git
-Create venv	python -m venv .venv
-Activate venv	.\.venv\Scripts\activate (Windows) / source .venv/bin/activate (Mac/Linux)
-Install deps	pip install -r requirements.txt
-Migrate DB	python manage.py migrate
-Create superuser	python manage.py createsuperuser
-Run server	python manage.py runserver
-Access site	http://127.0.0.1:8000
