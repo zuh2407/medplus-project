@@ -1,0 +1,133 @@
+{% extends 'store/base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4 text-primary fw-bold">Checkout</h2>
+
+    <div class="row g-4">
+
+        <!-- Left Column: Address -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm p-4 rounded-3">
+                <h5 class="fw-semibold mb-4">Delivery Address</h5>
+
+                <!-- Add New Address Section -->
+                <form method="POST" id="checkout-form">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {{ form.full_name.label_tag }}
+                            {{ form.full_name|add_class:"form-control form-control-sm" }}
+                            {% for error in form.full_name.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.phone.label_tag }}
+                            {{ form.phone|add_class:"form-control form-control-sm" }}
+                            {% for error in form.phone.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3 mt-2">
+                        {{ form.street.label_tag }}
+                        {{ form.street|add_class:"form-control form-control-sm" }}
+                        {% for error in form.street.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            {{ form.city.label_tag }}
+                            {{ form.city|add_class:"form-control form-control-sm" }}
+                            {% for error in form.city.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.state.label_tag }}
+                            {{ form.state|add_class:"form-control form-control-sm" }}
+                            {% for error in form.state.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            {{ form.postal_code.label_tag }}
+                            {{ form.postal_code|add_class:"form-control form-control-sm" }}
+                            {% for error in form.postal_code.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-success btn-sm px-4 mt-4">Proceed to Checkout</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Order Summary -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm p-3 rounded-3">
+                <h5 class="fw-semibold mb-3">Order Summary</h5>
+                {% if items %}
+                    <div class="list-group list-group-flush">
+                        {% for item in items %}
+                        <div class="list-group-item d-flex align-items-center p-2">
+                            {% if item.medicine.image %}
+                                <img src="{{ item.medicine.image.url }}" width="48" height="48" class="rounded me-2" style="object-fit:cover;">
+                            {% else %}
+                                <img src="{% static 'images/sample_medicine.jpg' %}" width="48" height="48" class="rounded me-2" style="object-fit:cover;">
+                            {% endif %}
+                            <div class="small">
+                                <strong>{{ item.medicine.name }}</strong><br>
+                                {{ item.quantity }} × ${{ item.medicine.price }} = ${{ item.get_total_price }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex justify-content-between mt-3 fw-bold fs-5">
+                        <span>Total:</span>
+                        <span>${{ total }}</span>
+                    </div>
+                {% else %}
+                    <p class="small text-muted">Your cart is empty. <a href="{% url 'product_list' %}">Shop now</a></p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Styles -->
+<style>
+    .card {
+        transition: 0.3s all;
+    }
+    .card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .btn-success {
+        border-radius: 6px;
+    }
+    .form-control-sm {
+        font-size: 0.875rem;
+        padding: 0.4rem 0.5rem;
+    }
+    @media (max-width: 991px) {
+        .col-lg-7, .col-lg-5 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+</style>
+
+{% endblock %}

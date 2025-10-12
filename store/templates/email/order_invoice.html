@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice - {{ order_id }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 20px; }
+    h1, h2 { color: #27ae60; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+    th { background-color: #27ae60; color: #fff; }
+    .total { text-align: right; font-weight: bold; }
+    .header, .footer { width: 100%; text-align: center; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>MedPlus Invoice</h1>
+    <p>Order ID: <strong>{{ order_id }}</strong></p>
+    <p>Date: {{ now|date:"F j, Y, g:i a" }}</p>
+    <p>Customer: {{ username }}</p>
+  </div>
+
+  <h2>Order Details</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Medicine</th>
+        <th>Quantity</th>
+        <th>Price ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in order_items %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.price }}</td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td colspan="2" class="total">Total</td>
+        <td>{{ total_price }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p>Thank you for shopping with MedPlus!</p>
+    <p>&copy; {{ now.year }} MedPlus. All rights reserved.</p>
+  </div>
+</body>
+</html>

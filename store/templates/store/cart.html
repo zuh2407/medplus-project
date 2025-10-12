@@ -1,0 +1,48 @@
+{% extends 'store/base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mt-4">Your Cart</h2>
+
+{% if items %}
+<div class="row row-cols-1 row-cols-md-2 g-4 mt-3">
+  {% for item in items %}
+  <div class="col">
+    <div class="card shadow-sm h-100">
+      <div class="row g-0 align-items-center">
+        <div class="col-md-4">
+          {% if item.medicine.image %}
+          <img src="{{ item.medicine.image.url }}" class="img-fluid rounded-start" alt="{{ item.medicine.name }}">
+          {% else %}
+          <img src="{% static 'images/sample_medicine.jpg' %}" class="img-fluid rounded-start" alt="{{ item.medicine.name }}">
+          {% endif %}
+        </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <h5 class="card-title">{{ item.medicine.name }}</h5>
+            <p class="card-text mb-1"><strong>Price:</strong> ${{ item.medicine.price }}</p>
+            <p class="card-text mb-1"><strong>Total:</strong> ${{ item.get_total_price }}</p>
+            <form method="post" action="{% url 'update_cart' %}" class="d-flex gap-2 align-items-center">
+              {% csrf_token %}
+              <input type="hidden" name="item_id" value="{{ item.id }}">
+              <button class="btn btn-sm btn-outline-success" name="action" value="increase"><i class="fa-solid fa-plus"></i></button>
+              <span>{{ item.quantity }}</span>
+              <button class="btn btn-sm btn-outline-warning" name="action" value="decrease"><i class="fa-solid fa-minus"></i></button>
+              <button class="btn btn-sm btn-outline-danger" name="action" value="remove"><i class="fa-solid fa-trash"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="text-end mt-4">
+  <h4>Total: ${{ total }}</h4>
+  <a href="{% url 'checkout' %}" class="btn btn-success">Proceed to Checkout</a>
+</div>
+
+{% else %}
+<p>Your cart is empty. <a href="{% url 'product_list' %}">Shop now</a></p>
+{% endif %}
+{% endblock %}

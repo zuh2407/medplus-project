@@ -1,0 +1,31 @@
+{% load static %}
+{% if featured %}
+<div class="mb-5">
+  <h4 class="mb-3">Featured Products</h4>
+  <div id="featuredCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+      {% for med in featured %}
+      <div class="carousel-item {% if forloop.first %}active{% endif %}">
+        <div class="d-flex justify-content-center">
+          {% if med.image %}
+          <img src="{{ med.image.url }}" class="d-block" style="height:300px; object-fit:cover; border-radius:12px;" alt="{{ med.name }}">
+          {% else %}
+          <img src="{% static 'images/sample_medicine.jpg' %}" class="d-block" style="height:300px; object-fit:cover; border-radius:12px;" alt="{{ med.name }}">
+          {% endif %}
+        </div>
+        <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+          <h5>{{ med.name }}</h5>
+          <p>${{ med.price }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#featuredCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#featuredCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order Confirmation - {{ order_id }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
+    h1 { color: #27ae60; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th, td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #27ae60; color: #fff; }
+    a.button { display: inline-block; padding: 10px 20px; background-color: #27ae60; color: #fff; text-decoration: none; border-radius: 5px; margin-top: 10px; }
+    .footer { font-size: 12px; color: #777; margin-top: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Thank you for your order, {{ username }}!</h1>
+    <p>Your Order ID: <strong>{{ order_id }}</strong></p>
+
+    <h2>Order Summary:</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Medicine</th>
+          <th>Quantity</th>
+          <th>Price ($)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order_items %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.price }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <td colspan="2"><strong>Total</strong></td>
+          <td><strong>{{ total_price }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>You can download your invoice here:</p>
+    <a href="{{ pdf_url }}" class="button">Download PDF Invoice</a>
+
+    <p>Visit us again: <a href="{{ home_url }}">{{ home_url }}</a></p>
+
+    <div class="footer">
+      &copy; {{ now.year }} MedPlus. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

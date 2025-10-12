@@ -1,0 +1,24 @@
+{% load static %}
+<div class="quick-view p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h5>{{ med.name }}</h5>
+    <button class="btn btn-sm btn-outline-secondary" onclick="this.closest('.quick-view').style.display='none'">Close</button>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      {% if med.image %}
+        <img src="{{ med.image.url }}" class="img-fluid" alt="{{ med.name }}">
+      {% else %}
+        <img src="{% static 'images/sample_medicine.jpg' %}" class="img-fluid" alt="{{ med.name }}">
+      {% endif %}
+    </div>
+    <div class="col-md-6">
+      <p><strong>Price:</strong> ${{ med.price }}</p>
+      <p>{{ med.description|default:"No description available." }}</p>
+      <form action="{% url 'add_to_cart' med.id %}" method="get" class="d-flex gap-2">
+        <input type="number" name="quantity" value="1" min="1" class="form-control w-25">
+        <button class="btn btn-success">Add to Cart</button>
+      </form>
+    </div>
+  </div>
+</div>

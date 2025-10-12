@@ -1,0 +1,14 @@
+{% load static %}
+<div class="row align-items-center mb-5">
+  <div class="col-md-7">
+    <h1 class="display-4 fw-bold">Your Health, <span class="text-primary">Our Priority</span></h1>
+    <p class="lead text-muted">Professional pharmacy services with fast delivery, expert consultation, and trusted medications for your family's wellness needs.</p>
+    <div class="mt-4">
+      <a href="{% url 'product_list' %}" class="btn btn-primary btn-lg me-2">Browse Medications</a>
+      <a href="{% url 'product_list' %}" class="btn btn-outline-primary btn-lg">Upload Prescription</a>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <img src="{% static 'images/hero-bg.jpg' %}" class="img-fluid rounded" alt="Pharmacy hero">
+  </div>
+</div>
