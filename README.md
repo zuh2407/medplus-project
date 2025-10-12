@@ -246,13 +246,5 @@ MIT License © 2025 MedPlus
 * Google OAuth → [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
   Redirect URI: `http://127.0.0.1:8000/accounts/google/login/callback/`
 
-> You can leave email, Stripe, and Google OAuth blank — the app still runs locally.
 
-```
 
----
-
-If you want, I can **also add GitHub badges and a more modern visual style** so it looks like a professional open-source project page.  
-
-Do you want me to do that next?
-```
