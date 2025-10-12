@@ -1,6 +1,3 @@
-Absolutely! I’ve cleaned up your README, fixed formatting issues, properly nested code blocks, and added clear headings with step-by-step instructions. This version is **professional, GitHub-friendly, and visually easy to read**:
-
-````markdown
 # 💊 MedPlus – Online Pharmacy
 
 MedPlus is a **Django-based e-commerce platform** for buying medicines online.  
