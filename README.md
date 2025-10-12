@@ -1,395 +1,249 @@
-Absolutely! Here’s your **clean, ready-to-paste version** of the README.md in **plain Markdown** — no extra code blocks around it, ready to go directly into your `README.md` file:
+💊 MedPlus – Online Pharmacy
 
----
+MedPlus is a Django-based e-commerce platform for buying medicines online.
+It offers a smooth user experience: browsing medicines, adding products to a cart, secure checkout, and Google social login.
 
-# MedPlus - Online Pharmacy
-
-MedPlus is a Django-based e-commerce platform for buying medicines online. It provides a smooth user experience, including browsing medicines, adding products to a cart, secure checkout, and Google social login.
-
----
-
-## Overview
+🧭 Overview
 
 MedPlus allows users to:
 
-* Register and login with email/password
-* Login via Google account
-* Browse medicines by category
-* Search and view product details
-* Add products to the shopping cart and manage it
-* Checkout with order summary
-* Receive email notifications for orders
-* View a responsive UI across desktop and mobile devices
+Register and login with email/password
 
----
+Login via Google account
 
-## Features
+Browse medicines by category
 
-* **User Authentication**: Email/password login and Google social login
-* **Product Browsing**: View medicines by category and search
-* **Shopping Cart**: Add, update, or remove products
-* **Checkout**: View order summary and complete purchases
-* **Email Notifications**: Receive confirmation emails for orders
-* **Responsive Design**: Mobile-friendly using Bootstrap
+Search and view product details
 
----
+Add products to the shopping cart and manage it
 
-## Demo Video
+Checkout with order summary
 
-Watch the demo video showing the application running locally:
+Receive email notifications for orders (optional)
 
-[Watch Demo Video](https://youtu.be/EB5bOYivwFg)
+Enjoy a responsive design optimized for desktop and mobile devices
 
-> The video demonstrates the full application workflow: login, Google login, product browsing, cart management, checkout, and order confirmation.
+🚀 Features
 
----
+User Authentication — Email/password login & Google social login
 
-## Installation & Setup
+Product Browsing — View medicines by category and search
 
-Follow these steps to run the project locally:
+Shopping Cart — Add, update, or remove products
 
-### 1. Clone the repository
+Checkout — View order summary and complete purchases
 
-```bash
-git clone https://github.com/your-username/medplus.git
-cd medplus
-```
+Email Notifications — Optional, for order confirmation
 
-### 2. Create and activate a virtual environment
+Responsive Design — Built with Bootstrap for all screen sizes
 
-**Windows:**
+🎥 Demo Video
 
-```bash
-python -m venv .venv
-.\.venv\Scripts\activate
-```
+Watch the demo video showing the full workflow:
 
-**macOS/Linux:**
+👉 Watch Demo Video on YouTube
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
+⚙️ Installation & Setup (Collaborator-Friendly)
+1️⃣ Clone the Repository
 
-### 3. Install dependencies
+Option A — Terminal / PowerShell:
 
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure environment variables
-
-Create a `.env` file in the root directory. Example:
-
-```
-DJANGO_SECRET_KEY=your-secret-key
-DJANGO_DEBUG=True
-DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-STRIPE_PUBLIC_KEY=your-stripe-public-key
-STRIPE_SECRET_KEY=your-stripe-secret-key
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-email-password
-ACCOUNT_EMAIL_VERIFICATION=none
-```
-
-> **Important:** Do not commit your real `.env` file. Use `.env.example` instead.
-
-### 5. Apply database migrations
-
-```bash
-python manage.py migrate
-```
-
-### 6. Run the development server
-
-```bash
-python manage.py runserver
-```
-
-* Open your browser at [http://127.0.0.1:8000/](http://127.0.0.1:8000/) to view the application.
-
----
-
-## Folder Structure
-
-```
-pharmacy_app/
-│
-├─ pharmacy/                 # Django project folder (settings.py, wsgi.py)
-├─ store/                    # Django app
-├─ templates/                # HTML templates
-├─ staticfiles/              # CSS, JS, images
-│   └─ images/               # auth-illustration.png, etc.
-├─ .env.example              # Example environment variables
-├─ requirements.txt
-├─ README.md
-└─ db.sqlite3                # Optional: database file (ignore in GitHub)
-```
-
----
-
-## How to Use
-
-1. Register a new account or login via Google
-2. Browse available medicines by category
-3. Add desired products to the cart
-4. Checkout to complete your order
-5. Check email for order confirmation (if email settings are configured)
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create a branch (`git checkout -b feature/your-feature`)
-3. Make changes
-4. Commit (`git commit -m "Add feature"`)
-5. Push (`git push origin feature/your-feature`)
-6. Open a Pull Request
-
----
-
-## License
-
-MIT License
-
----
-
-## Notes
-
-* The demo video is hosted externally on YouTube to avoid GitHub file size limits.
-* Ensure your `.env` file is correctly configured to run the project locally.
-* You can safely remove any large local video from the repo to keep it lightweight:
-
-```bash
-git rm --cached demo/medplus-demo.mp4
-git commit -m "Remove large demo video, use YouTube link instead"
-git push origin main
-```
-
----
-
-### Next Steps
-
-1. Replace `your-username` in the clone URL with your GitHub username.
-2. Make sure `.env.example` is in the repo with placeholder values.
-3. Push this README.md to your GitHub repository.
-
----
-How a collaborator can run MedPlus locally:
-
-Quick summary: clone the repo → create venv → install requirements → copy .env.example → fill real values → run migrations → (optionally) collect static → create superuser → runserver.
-
-1) Clone the repository
-git clone https://github.com/<your-username>/pharmacy_app.git
+git clone https://github.com/zuh2407/pharmacy_app.git
 cd pharmacy_app
 
 
-Replace <your-username> with your GitHub username.
+Option B — VS Code:
 
-2) Create & activate a virtual environment
+Open VS Code → Ctrl + Shift + P → “Git: Clone”
 
-Windows
+Paste the repo link → choose folder
+
+VS Code opens the project automatically
+
+2️⃣ Create & Activate Virtual Environment
+
+Windows (PowerShell):
 
 python -m venv .venv
 .\.venv\Scripts\activate
 
 
-macOS / Linux
+macOS / Linux:
 
 python3 -m venv .venv
 source .venv/bin/activate
 
 
-If Python is not found, they should install Python 3.10+ (3.11 recommended).
+Tip: “(.venv)” should appear in the terminal if activated.
 
-3) Update pip and install dependencies
-python -m pip install --upgrade pip
+3️⃣ Install Dependencies
 pip install -r requirements.txt
 
+4️⃣ Configure Environment Variables
 
-If dependency install fails, check Python version and pip output; share the error if unsure.
+Copy .env.example to .env:
 
-4) Copy .env.example to .env and fill values
+Windows:
 
-Project should have a .env.example. Tell them to:
-
-cp .env.example .env        # macOS/Linux
-copy .env.example .env      # Windows (PowerShell: cp works too)
+copy .env.example .env
 
 
-Open .env and set values:
+macOS / Linux:
 
-DJANGO_SECRET_KEY=some-random-secret
+cp .env.example .env
+
+
+Open .env and fill your own credentials (optional for basic usage):
+
+DJANGO_SECRET_KEY=your-secret-key
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-STRIPE_PUBLIC_KEY=...
-STRIPE_SECRET_KEY=...
+DJANGO_SITE_ID=1
+DJANGO_TIME_ZONE=UTC
+
+DB_ENGINE=django.db.backends.sqlite3
+DB_NAME=db.sqlite3
+
+# Optional: Gmail for order notifications
 EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-email-password
+EMAIL_HOST_PASSWORD=your-app-password
+
+# Optional: Google OAuth for social login
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Optional: Stripe test keys for payments
+STRIPE_PUBLIC_KEY=your-stripe-public-key
+STRIPE_SECRET_KEY=your-stripe-secret-key
+
 ACCOUNT_EMAIL_VERIFICATION=none
 
 
-Notes:
+Important: Only the collaborator’s .env contains real credentials.
+.env.example has placeholders and is safe to commit on GitHub.
 
-For quick local testing, DJANGO_DEBUG=True is fine.
+Tips for generating credentials:
 
-If you don’t want to configure Google/Stripe/email, leave those fields blank — the app will still run for basic flows.
+Gmail App Password: https://myaccount.google.com/apppasswords
 
-Never commit .env to GitHub.
+(Requires 2-Step Verification enabled)
 
-5) Database setup & migrations
+Stripe Keys: https://dashboard.stripe.com/test/apikeys
 
-If the project uses SQLite (default), no extra DB server is needed.
+Use test keys for development.
 
-Run:
+Google OAuth: Google Cloud Console → Credentials
 
+Redirect URI: http://127.0.0.1:8000/accounts/google/login/callback/
+
+5️⃣ Apply Database Migrations
 python manage.py migrate
 
-
-If the project uses PostgreSQL, they must set DB_ENGINE, DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT in .env and have Postgres installed.
-
-6) (Optional) Load sample data
-
-If you have fixtures, you can load them:
-
-python manage.py loaddata demo_fixture.json
-
-
-(Only if you included a fixture file; otherwise skip.)
-
-7) Create a superuser (admin)
+6️⃣ (Optional) Create Admin User
 python manage.py createsuperuser
-# follow the prompts (username/email/password)
 
-
-They can now login to /admin/.
-
-8) Static files (development)
-
-In development with DEBUG=True, Django serves static files automatically if STATICFILES_DIRS is configured. If you want to collect static (useful to test WhiteNoise locally):
-
-python manage.py collectstatic --noinput
-
-
-(Collectstatic writes to STATIC_ROOT.)
-
-9) Run the development server
+7️⃣ Run Development Server
 python manage.py runserver
 
 
-Open in browser: http://127.0.0.1:8000/
+Open http://127.0.0.1:8000
+ in your browser.
 
-If they want to show the site on a phone across the same Wi‑Fi:
-
-Find PC IP (ipconfig on Windows, ifconfig/ip addr on mac/linux).
-
-Run server binding all interfaces:
+Optional — mobile access on same Wi-Fi:
 
 python manage.py runserver 0.0.0.0:8000
 
 
-On phone open: http://<PC_IP>:8000/ (ensure firewall allows it).
+Open http://<PC_IP>:8000 on your phone.
 
-10) Google OAuth (optional, for social login)
+🧑‍🤝‍🧑 Collaborator Workflow
 
-If they want to test Google login, they must:
+Accept GitHub invite
 
-Create OAuth credentials in Google Cloud Console.
+Clone repo (terminal or VS Code)
 
-Add redirect URI in Google Console:
+Create & activate virtual environment
 
-http://127.0.0.1:8000/accounts/google/login/callback/
+Install dependencies
 
+Copy .env.example → .env and fill credentials (optional: email/Stripe/Google)
 
-Put GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET into .env.
+Run migrations
 
-If Google login fails, check site domain in Google Console and that SOCIALACCOUNT_PROVIDERS is correctly configured.
+Create superuser (optional)
 
-11) Stripe (optional)
+Run server → test locally
 
-For payment flows use Stripe test keys in .env:
+Open in browser → http://127.0.0.1:8000
 
-STRIPE_PUBLIC_KEY=pk_test_xxx
-STRIPE_SECRET_KEY=sk_test_xxx
+Edit and push changes through feature branch → open Pull Request
 
+💻 VS Code Setup (Recommended)
 
-Use Stripe test cards during testing (e.g., 4242 4242 4242 4242).
+Open project in VS Code (code .)
 
-12) Email for local testing
+Open integrated terminal (Ctrl + ~)
 
-For real email notifications, fill SMTP credentials in .env.
+Activate .venv
 
-For local testing without real SMTP, temporarily set:
+Install dependencies
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+Run server (python manage.py runserver)
 
+Ctrl + Click link in terminal to open in browser
 
-or in .env add a flag the settings.py uses to switch to console backend.
+Select interpreter: Ctrl + Shift + P → “Python: Select Interpreter” → choose .venv
 
-13) Common troubleshooting & fixes
+📂 Folder Structure
+pharmacy_app/
+│
+├─ pharmacy/          # Django project
+├─ store/             # Django app
+├─ templates/         # HTML templates
+├─ staticfiles/       # CSS, JS, images
+│   └─ images/        # auth-illustration.png, etc.
+├─ .env.example       # Example environment variables (placeholders)
+├─ requirements.txt
+├─ README.md
+└─ db.sqlite3         # Optional, ignored in GitHub
 
-“Module not found” errors: Ensure virtualenv is activated and pip install -r requirements.txt succeeded.
+🤝 Contributing
 
-Python version conflicts: Use Python 3.11 if you used packages requiring it (Django 5.x). Check python --version.
+Fork repository → create branch → make changes → commit → push → open Pull Request
 
-Migrations errors: Run python manage.py makemigrations then migrate. If stuck, inspect the traceback.
+⚖️ License
 
-Static images not showing: If DEBUG=True, static served automatically. If not, run collectstatic and ensure WhiteNoise is configured.
+MIT License © 2025 MedPlus
 
-Large file pushed earlier: If they clone the repo and LFS was used, they may need to install Git LFS: git lfs install.
+🧩 Notes — Generating Credentials
 
-Blocked port 8000: Another app uses it — run runserver 0.0.0.0:8001 or stop the conflicting app.
+Email App Password (for Gmail notifications) → https://myaccount.google.com/apppasswords
 
-14) Pulling latest changes (daily workflow)
+(2-Step Verification required)
 
-Tell them to update their copy regularly:
+Stripe API Keys → https://dashboard.stripe.com/test/apikeys
 
-git pull origin main
+Use test keys in .env.
 
+Google OAuth → https://console.cloud.google.com/apis/credentials
 
-If they create a branch for features:
+Add redirect URI: http://127.0.0.1:8000/accounts/google/login/callback/
 
-git checkout -b feature/my-feature
-# make changes
-git add .
-git commit -m "Add X"
-git push origin feature/my-feature
-# open PR on GitHub
+You can leave email, Stripe, and Google OAuth blank — the app will still run locally.
 
-15) Helpful commands summary
-# clone
-git clone https://github.com/<user>/pharmacy_app.git
+To remove any large demo video safely:
 
-# venv
-python -m venv .venv
-.\.venv\Scripts\activate   # Windows
-source .venv/bin/activate  # mac/linux
+git rm --cached demo/medplus-demo.mp4
+git commit -m "Remove large demo video, use YouTube link"
+git push origin main
 
-# install
-pip install -r requirements.txt
-
-# env
-cp .env.example .env
-# edit .env
-
-# migrate & create superuser
-python manage.py migrate
-python manage.py createsuperuser
-
-# collectstatic (optional)
-python manage.py collectstatic --noinput
-
-# run server
-python manage.py runserver
-# or runserver 0.0.0.0:8000 to access from phone
-
-# git workflow
-git checkout -b feature/xxx
-git add .
-git commit -m "message"
-git push origin feature/xxx
+✅ Quick Commands Summary
+Task	Command
+Clone repo	git clone https://github.com/zuh2407/pharmacy_app.git
+Create venv	python -m venv .venv
+Activate venv	.\.venv\Scripts\activate (Windows) / source .venv/bin/activate (Mac/Linux)
+Install deps	pip install -r requirements.txt
+Migrate DB	python manage.py migrate
+Create superuser	python manage.py createsuperuser
+Run server	python manage.py runserver
+Access site	http://127.0.0.1:8000
