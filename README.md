@@ -1,3 +1,6 @@
+Absolutely! I’ve cleaned up your README, fixed formatting issues, properly nested code blocks, and added clear headings with step-by-step instructions. This version is **professional, GitHub-friendly, and visually easy to read**:
+
+````markdown
 # 💊 MedPlus – Online Pharmacy
 
 MedPlus is a **Django-based e-commerce platform** for buying medicines online.  
@@ -41,7 +44,9 @@ Watch the demo video showing the full workflow:
 
 ## ⚙️ Installation & Setup
 
-Follow these steps to run MedPlus locally.  
+Follow these steps to run MedPlus locally.
+
+---
 
 ### 1️⃣ Clone the Repository
 
@@ -50,49 +55,63 @@ Follow these steps to run MedPlus locally.
 ```bash
 git clone https://github.com/zuh2407/pharmacy_app.git
 cd pharmacy_app
-Option B — VS Code:
+````
 
-Open VS Code → Ctrl + Shift + P → Git: Clone
+**Option B — VS Code:**
 
-Paste the repo link → choose folder
+1. Open VS Code → `Ctrl + Shift + P` → `Git: Clone`
+2. Paste the repo link → choose folder
+3. VS Code opens the project automatically
 
-VS Code opens the project automatically
+---
 
-2️⃣ Create & Activate Virtual Environment
+### 2️⃣ Create & Activate Virtual Environment
 
-Windows (PowerShell):
+**Windows (PowerShell):**
 
+```powershell
 python -m venv .venv
 .\.venv\Scripts\activate
+```
 
+**macOS / Linux:**
 
-macOS / Linux:
-
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
+```
 
+You should see `(.venv)` in the terminal if activation succeeded.
 
-You should see (.venv) in the terminal if activation succeeded.
+---
 
-3️⃣ Install Dependencies
+### 3️⃣ Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-4️⃣ Configure Environment Variables
+---
 
-Copy .env.example to .env:
+### 4️⃣ Configure Environment Variables
 
-Windows:
+Copy `.env.example` to `.env`:
 
+**Windows:**
+
+```powershell
 copy .env.example .env
+```
 
+**macOS / Linux:**
 
-macOS / Linux:
-
+```bash
 cp .env.example .env
+```
 
+Open `.env` and fill your credentials (optional for basic usage):
 
-Open .env and fill your own credentials (optional for basic usage):
-
+```dotenv
 DJANGO_SECRET_KEY=your-secret-key
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
@@ -115,81 +134,84 @@ STRIPE_PUBLIC_KEY=your-stripe-public-key
 STRIPE_SECRET_KEY=your-stripe-secret-key
 
 ACCOUNT_EMAIL_VERIFICATION=none
+```
 
+**Tips for generating credentials:**
 
-Tips for generating credentials:
+* Gmail App Password → [Gmail App Passwords](https://myaccount.google.com/apppasswords) (2-Step Verification required)
+* Stripe Test Keys → [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys)
+* Google OAuth → [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 
-Gmail App Password → Gmail App Passwords
+Redirect URI: `http://127.0.0.1:8000/accounts/google/login/callback/`
 
-(2-Step Verification required)
+> `.env` contains real credentials. `.env.example` is safe for GitHub.
 
-Stripe Test Keys → Stripe Dashboard
+---
 
-Google OAuth → Google Cloud Console
+### 5️⃣ Apply Database Migrations
 
-Redirect URI: http://127.0.0.1:8000/accounts/google/login/callback/
-
-.env contains real credentials. .env.example is safe for GitHub.
-
-5️⃣ Apply Database Migrations
+```bash
 python manage.py migrate
+```
 
-6️⃣ (Optional) Create Admin User
+---
+
+### 6️⃣ (Optional) Create Admin User
+
+```bash
 python manage.py createsuperuser
+```
 
-7️⃣ Run Development Server
+---
+
+### 7️⃣ Run Development Server
+
+```bash
 python manage.py runserver
+```
 
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
-Open http://127.0.0.1:8000
- in your browser.
+**Optional — mobile access on same Wi-Fi:**
 
-Optional — mobile access on same Wi-Fi:
-
+```bash
 python manage.py runserver 0.0.0.0:8000
+```
 
+Open `http://<PC_IP>:8000` on your phone.
 
-Open http://<PC_IP>:8000 on your phone.
+---
 
-🧑‍🤝‍🧑 Collaborator Workflow
+## 🧑‍🤝‍🧑 Collaborator Workflow
 
-Accept GitHub invite
+1. Accept GitHub invite
+2. Clone repository
+3. Create & activate virtual environment
+4. Install dependencies
+5. Copy `.env.example → .env` and fill credentials (optional)
+6. Run migrations → `python manage.py migrate`
+7. Create superuser (optional)
+8. Run server → test locally
+9. Open browser → [http://127.0.0.1:8000](http://127.0.0.1:8000)
+10. Push changes via feature branch → open Pull Request
 
-Clone repository
+---
 
-Create & activate virtual environment
+## 💻 VS Code Setup (Recommended)
 
-Install dependencies
+* Open project in VS Code (`code .`)
+* Open integrated terminal (`Ctrl + ~`)
+* Activate `.venv`
+* Install dependencies
+* Run server (`python manage.py runserver`)
+* Ctrl + Click link in terminal to open browser
+* Select interpreter: `Ctrl + Shift + P` → `Python: Select Interpreter` → choose `.venv`
 
-Copy .env.example → .env and fill credentials (optional)
+---
 
-Run migrations → python manage.py migrate
+## 📂 Folder Structure
 
-Create superuser (optional)
-
-Run server → test locally
-
-Open browser → http://127.0.0.1:8000
-
-Push changes via feature branch → open Pull Request
-
-💻 VS Code Setup (Recommended)
-
-Open project in VS Code (code .)
-
-Open integrated terminal (Ctrl + ~)
-
-Activate .venv
-
-Install dependencies
-
-Run server (python manage.py runserver)
-
-Ctrl + Click link in terminal to open browser
-
-Select interpreter: Ctrl + Shift + P → Python: Select Interpreter → choose .venv
-
-📂 Folder Structure
+```
 pharmacy_app/
 │
 ├─ pharmacy/          # Django project
@@ -201,27 +223,39 @@ pharmacy_app/
 ├─ requirements.txt
 ├─ README.md
 └─ db.sqlite3         # Optional, ignored in GitHub
+```
 
-🤝 Contributing
+---
 
-Fork repository
+## 🤝 Contributing
 
-Create branch → make changes
+1. Fork repository
+2. Create branch → make changes
+3. Commit → push
+4. Open Pull Request
 
-Commit → push
+---
 
-Open Pull Request
-
-⚖️ License
+## ⚖️ License
 
 MIT License © 2025 MedPlus
 
-🧩 Notes — Generating Credentials
+---
 
-Email App Password → Gmail App Passwords
+## 🧩 Notes — Generating Credentials
 
-Stripe API Keys → Stripe Dashboard
+* Email App Password → [Gmail App Passwords](https://myaccount.google.com/apppasswords)
+* Stripe API Keys → [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys)
+* Google OAuth → [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+  Redirect URI: `http://127.0.0.1:8000/accounts/google/login/callback/`
 
-Google OAuth → Google Cloud Console
+> You can leave email, Stripe, and Google OAuth blank — the app still runs locally.
 
-Redirect URI: http://127.0.0.1:8000/accounts/google/login/callback/
+```
+
+---
+
+If you want, I can **also add GitHub badges and a more modern visual style** so it looks like a professional open-source project page.  
+
+Do you want me to do that next?
+```
