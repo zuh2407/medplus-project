@@ -1,0 +1,15 @@
+{% load static %}
+
+<div id="chatbot">
+  <div id="chatbot-header">💊 Chat with MedBot</div>
+  <div id="chatbot-body">
+    <div id="chatbot-messages"></div>
+    <div id="chatbot-input">
+      <input type="text" id="chatbot-text" placeholder="Ask about medicines...">
+      <button id="chatbot-send">Send</button>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="{% static 'chatbot/chatbot.css' %}">
+<script src="{% static 'chatbot/chatbot.js' %}"></script>

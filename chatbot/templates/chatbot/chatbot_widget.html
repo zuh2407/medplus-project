@@ -1,0 +1,16 @@
+{% load static %}
+<div id="pharmacy-chatbot-widget">
+  <link rel="stylesheet" href="{% static 'chatbot/css/chatbot.css' %}">
+  <div class="chat-bubble" id="chat-toggle">💬</div>
+
+  <div class="chat-container" id="chat-window" style="display: none;">
+    <div class="chat-header">💊 Pharmacy Assistant</div>
+    <div id="chat-box" class="chat-box"></div>
+    <div class="input-container">
+      <input type="text" id="user-input" placeholder="Ask about a medicine...">
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <script src="{% static 'chatbot/js/chatbot.js' %}"></script>
+</div>

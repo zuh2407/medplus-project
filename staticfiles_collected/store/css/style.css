@@ -1,0 +1,36 @@
+/* MedPlus custom styles */
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* navbar */
+.navbar-brand img { border-radius: 8px; }
+
+/* hero */
+.display-4 { font-weight: 700; color: #0b5ed7; }
+
+/* cards */
+.medicine-card { border-radius: 12px; overflow: hidden; transition: transform .25s ease, box-shadow .25s ease; }
+.medicine-card img { height: 220px; object-fit: cover; width: 100%; }
+.medicine-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(2,6,23,0.08); }
+
+/* buttons */
+.btn-primary { background: linear-gradient(90deg,#0b5ed7,#0a58ca); border: none; }
+.btn-success { background: linear-gradient(90deg,#28a745,#218838); border: none; }
+.btn-outline-primary { border-color: rgba(11,94,215,0.15); }
+
+/* mini cart dropdown */
+.dropdown-menu { border-radius: 10px; }
+
+/* layout tweaks */
+.hero-banner, .hero {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+.hero .logo { width: 120px; }
+
+/* utility */
+.text-primary { color: #0b5ed7 !important; }

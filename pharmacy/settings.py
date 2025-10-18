@@ -29,7 +29,6 @@ ALLOWED_HOSTS = [
 # APPLICATION DEFINITION
 # -------------------------------
 INSTALLED_APPS = [
-    # Django default apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -39,8 +38,10 @@ INSTALLED_APPS = [
 
     # Your apps
     "store",
+    "chatbot",
+    "pharmacy",
 
-    # Allauth & social login
+    # Allauth
     "django.contrib.sites",
     "allauth",
     "allauth.account",
@@ -56,7 +57,7 @@ INSTALLED_APPS = [
 # -------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # serve static files in production
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -79,7 +80,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
-                "django.template.context_processors.request",  # required by allauth
+                "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
@@ -126,8 +127,8 @@ USE_TZ = True
 # STATIC & MEDIA
 # -------------------------------
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "staticfiles"]  # development static files
-STATIC_ROOT = BASE_DIR / "staticfiles_collected"  # for production
+STATICFILES_DIRS = [BASE_DIR / "staticfiles"]
+STATIC_ROOT = BASE_DIR / "staticfiles_collected"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
@@ -169,9 +170,6 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_ADAPTER = "store.adapters.MySocialAccountAdapter"
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
-# -------------------------------
-# GOOGLE SOCIAL LOGIN
-# -------------------------------
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "SCOPE": ["profile", "email"],
@@ -182,26 +180,14 @@ SOCIALACCOUNT_PROVIDERS = {
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
-# -------------------------------
-# STRIPE
-# -------------------------------
 STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 
-# -------------------------------
-# DEFAULT AUTO FIELD
-# -------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# -------------------------------
-# LOGGING
-# -------------------------------
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
 }
 
-# -------------------------------
-# SILENCE W001 WARNING
-# -------------------------------
 SILENCED_SYSTEM_CHECKS = ["account.W001"]
