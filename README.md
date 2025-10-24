@@ -315,8 +315,7 @@ MIT License © 2025 MedPlus
 * **Google OAuth:** [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
   Redirect URI: `http://127.0.0.1:8000/accounts/google/login/callback/`
 
-```
 
----
+
 
 
