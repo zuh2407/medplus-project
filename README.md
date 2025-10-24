@@ -1,6 +1,3 @@
-Absolutely! I’ve updated your `README.md` to explicitly mention **creating `requirements.txt`** from your environment and pasting the packages. Here’s the final polished version ready to copy-paste:
-
----
 
 ````markdown
 # 💊 MedPlus – Online Pharmacy
