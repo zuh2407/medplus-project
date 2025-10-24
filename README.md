@@ -1,5 +1,3 @@
-
-````markdown
 # 💊 MedPlus – Online Pharmacy
 
 MedPlus is a **Django-based e-commerce platform** for buying medicines online.  
