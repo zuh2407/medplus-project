@@ -319,14 +319,4 @@ MIT License © 2025 MedPlus
 
 ---
 
-✅ This version:  
-- Mentions **creating `requirements.txt`** from `pip freeze`  
-- Mentions **copy-pasting package list** if needed  
-- Keeps the setup instructions clear, professional, and ready for collaborators  
 
----
-
-If you want, I can **also make the dependencies section a small table with package + version columns**, which looks very neat in GitHub README.  
-
-Do you want me to do that?
-```
