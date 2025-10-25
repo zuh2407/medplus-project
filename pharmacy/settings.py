@@ -127,8 +127,8 @@ USE_TZ = True
 # STATIC & MEDIA
 # -------------------------------
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "staticfiles"]
-STATIC_ROOT = BASE_DIR / "staticfiles_collected"
+STATICFILES_DIRS = [BASE_DIR / "static"]           # your development static folder
+STATIC_ROOT = BASE_DIR / "static_collected"       # for collectstatic in production
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
