@@ -1,8 +1,5 @@
 {% load static %}
-<!-- Pharmacy Chatbot widget (single, consistent version) -->
-<link rel="stylesheet" href="{% static 'chatbot/css/chatbot.css' %}">
-
-<div id="pharmacy-chatbot-widget" aria-live="polite">
+<div id="pharmacy-chatbot-widget" aria-live="polite" data-endpoint="{% url 'chatbot_response' %}">
   <!-- Floating toggle button / icon -->
   <button class="chat-bubble" id="chat-toggle" title="Open chat" aria-label="Open chat">💬</button>
 
@@ -22,4 +19,5 @@
   </div>
 </div>
 
+<link rel="stylesheet" href="{% static 'chatbot/css/chatbot.css' %}">
 <script src="{% static 'chatbot/js/chatbot.js' %}"></script>
