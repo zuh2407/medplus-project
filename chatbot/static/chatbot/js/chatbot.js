@@ -1,107 +1,71 @@
-// chatbot/static/chatbot/js/chatbot.js
+// chatbot/static/js/chatbot.js
 document.addEventListener("DOMContentLoaded", () => {
-  // Find widget container and elements safely
-  const widget = document.getElementById("pharmacy-chatbot-widget");
-  if (!widget) return; // no widget on this page
-
-  const endpoint = widget.dataset.endpoint || "/chatbot/";
-
+  const icon = document.getElementById("chatbot-icon");
+  const box = document.getElementById("chatbot-box");
+  const closeBtn = document.getElementById("chatbot-close");
   const sendBtn = document.getElementById("chatbot-send");
-  const input = document.getElementById("chatbot-text");
-  const messages = document.getElementById("chat-box");
-  const chatToggle = document.getElementById("chat-toggle");
-  const chatWindow = document.getElementById("chat-window");
-  const chatClose = document.getElementById("chat-close");
+  const input = document.getElementById("chatbot-input");
+  const messages = document.getElementById("chatbot-messages");
 
-  // Helper: get cookie (for CSRF)
-  function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return null;
-  }
-  const csrftoken = getCookie('csrftoken');
+  // 1️⃣ Open and close chatbot
+  icon.addEventListener("click", () => {
+    box.style.display = "flex";
+  });
 
-  // Toggle chat window visibility (safe)
-  function openChat() {
-    if (!chatWindow) return;
-    chatWindow.style.display = "block";
-    chatWindow.setAttribute("aria-hidden", "false");
-    if (input) input.focus();
-  }
-  function closeChat() {
-    if (!chatWindow) return;
-    chatWindow.style.display = "none";
-    chatWindow.setAttribute("aria-hidden", "true");
-  }
+  closeBtn.addEventListener("click", () => {
+    box.style.display = "none";
+  });
 
-  if (chatToggle) {
-    chatToggle.addEventListener("click", () => {
-      if (!chatWindow) openChat(); // fallback
-      if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
-        openChat();
-      } else {
-        closeChat();
-      }
-    });
-  }
-
-  if (chatClose) chatClose.addEventListener("click", closeChat);
-
-  // Append message to chat box
-  function appendMessage(sender, text) {
-    if (!messages) return;
-    const wrapper = document.createElement("div");
-    wrapper.className = sender === "Bot" ? "bot-message" : "user-message";
-    // allow HTML (bot responses may include simple markup from server)
-    wrapper.innerHTML = `<span class="msg-sender">${sender}:</span> <span class="msg-text">${text}</span>`;
-    messages.appendChild(wrapper);
+  // 2️⃣ Send message
+  function appendMessage(sender, text, color = "#333") {
+    const msg = document.createElement("div");
+    msg.style.margin = "6px 0";
+    msg.innerHTML = `<b style="color:${color}">${sender}:</b> ${text}`;
+    messages.appendChild(msg);
     messages.scrollTop = messages.scrollHeight;
   }
 
-  // Send message to backend
-  function sendMessage() {
-    if (!input) return;
-    const message = input.value.trim();
-    if (!message) return;
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
 
-    appendMessage("You", message);
+    appendMessage("You", text, "#2563eb");
     input.value = "";
-    input.focus();
 
-    // try sending as form-encoded (server accepts form); include CSRF header
-    fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "X-CSRFToken": csrftoken || ''
-      },
-      body: `message=${encodeURIComponent(message)}`
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Network response not ok');
-      return res.json();
-    })
-    .then(data => {
-      const botText = data && data.response ? data.response : "No response.";
-      appendMessage("Bot", botText);
-    })
-    .catch((err) => {
-      console.error("Chatbot error:", err);
-      appendMessage("Bot", "Error connecting to server.");
-    });
+    try {
+      const res = await fetch("/chatbot/get_response/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json();
+      appendMessage("Bot", data.response || "Error processing request.", "#000");
+    } catch (e) {
+      appendMessage("Bot", "⚠️ Connection error.", "red");
+    }
   }
 
-  // Attach send handlers (defensive - check elements exist)
-  if (sendBtn) {
-    sendBtn.addEventListener("click", sendMessage);
-  }
-  if (input) {
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        sendMessage();
+  sendBtn.addEventListener("click", sendMessage);
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+
+  // 3️⃣ CSRF token helper
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
       }
-    });
+    }
+    return cookieValue;
   }
 });
