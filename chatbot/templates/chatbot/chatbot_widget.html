@@ -2,15 +2,18 @@
 <!-- Pharmacy Chatbot widget (single, consistent version) -->
 <link rel="stylesheet" href="{% static 'chatbot/css/chatbot.css' %}">
 
-<div id="pharmacy-chatbot-widget">
+<div id="pharmacy-chatbot-widget" aria-live="polite">
   <!-- Floating toggle button / icon -->
-  <div class="chat-bubble" id="chat-toggle" title="Open chat">💬</div>
+  <button class="chat-bubble" id="chat-toggle" title="Open chat" aria-label="Open chat">💬</button>
 
   <!-- Chat window (hidden by default) -->
-  <div class="chat-container" id="chat-window" style="display: none;">
-    <div class="chat-header">💊 Pharmacy Assistant</div>
+  <div class="chat-container" id="chat-window" aria-hidden="true" style="display: none;">
+    <div class="chat-header">
+      <span class="chat-title">💊 Pharmacy Assistant</span>
+      <button id="chat-close" class="chat-close" aria-label="Close chat">✕</button>
+    </div>
 
-    <div id="chat-box" class="chat-box"></div>
+    <div id="chat-box" class="chat-box" role="log" aria-live="polite"></div>
 
     <div class="input-container">
       <input type="text" id="chatbot-text" placeholder="Ask about a medicine..." autocomplete="off" />
