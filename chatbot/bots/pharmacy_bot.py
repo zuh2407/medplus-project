@@ -2,14 +2,12 @@
 from pathlib import Path
 import pandas as pd
 import random
-import os
 
 # Compute project root (two levels up from this file: chatbot/bots/ -> project root)
 HERE = Path(__file__).resolve().parent  # chatbot/bots
 PROJECT_ROOT = HERE.parent.parent  # chatbot/
 
 # common expected location: project root (same place as manage.py) or a data folder
-# try possible locations
 possible = [
     PROJECT_ROOT / "pharmacy_corpus.csv",
     PROJECT_ROOT / "health_corpus.csv",
@@ -24,10 +22,8 @@ def load_corpus(path: Path):
         return None
     try:
         df = pd.read_csv(path)
-        # normalize columns
-        if 'question' in df.columns.str.lower():
-            # make case-insensitive mapping
-            df.columns = [c.strip() for c in df.columns]
+        # normalize columns to lowercase names
+        df.columns = [str(c).strip().lower() for c in df.columns]
         # ensure columns exist
         if 'question' in df.columns and 'answer' in df.columns:
             df = df.dropna(subset=['question'])
@@ -42,8 +38,9 @@ def load_corpus(path: Path):
 CORPUS_DF = None
 for p in possible:
     if p and p.exists():
-        CORPUS_DF = load_corpus(Path(p))
-        if CORPUS_DF is not None:
+        d = load_corpus(Path(p))
+        if d is not None:
+            CORPUS_DF = d
             break
 
 def generate_bot_reply(user_input: str) -> str:
@@ -64,9 +61,8 @@ def generate_bot_reply(user_input: str) -> str:
             q = str(row['question']).strip().lower()
             if not q:
                 continue
-            # if question exactly in input or input contains question phrase
             if q in ui:
-                return row['answer']
+                return str(row['answer'])
 
     # 2) default pharmacy-specific quick responses
     default_choices = [

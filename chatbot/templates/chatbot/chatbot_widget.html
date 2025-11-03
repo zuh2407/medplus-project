@@ -2,64 +2,69 @@
 
 <!-- Chatbot Wrapper -->
 <div id="chatbot-wrapper">
-    <!-- Chatbot Icon -->
-    <div id="chatbot-icon">💬</div>
+  <!-- Chatbot Icon -->
+  <div id="chatbot-icon" role="button" aria-label="Open chat">💬</div>
 
-    <!-- Chatbot Box -->
-    <div id="chatbot-box">
-        <div class="chat-header">
-            <span class="chat-title">Health & Pharmacy Assistant</span>
-            <button id="chatbot-close" class="chat-close">×</button>
-        </div>
-
-        <div id="chatbot-messages" class="chat-box"></div>
-
-        <div class="input-container">
-            <input id="chatbot-input" type="text" placeholder="Type your message..." />
-            <button id="chatbot-send">Send</button>
-        </div>
+  <!-- Chatbot Box -->
+  <div id="chatbot-box" class="chat-container" aria-hidden="true">
+    <div class="chat-header">
+      <span class="chat-title">Health & Pharmacy Assistant</span>
+      <button id="chatbot-close" class="chat-close" aria-label="Close chat">×</button>
     </div>
+
+    <div id="chatbot-messages" class="chat-box"></div>
+
+    <div class="input-container">
+      <input id="chatbot-input" type="text" placeholder="Type your message..." />
+      <button id="chatbot-send">Send</button>
+    </div>
+  </div>
 </div>
 
-<!-- CSS -->
+<!-- CSS: path under chatbot app's static folder -->
 <link rel="stylesheet" href="{% static 'chatbot/css/chatbot.css' %}">
 
-<!-- JS at the very end -->
-<script src="{% static 'js/chatbot.js' %}"></script>
+<!-- JS: ensure correct path -->
+<script>
+  // expose endpoint to JS in a safe way
+  window.CHATBOT_ENDPOINT = "{% url 'chatbot_response' %}";
+</script>
+<script src="{% static 'chatbot/js/chatbot.js' %}?v=20251103"></script>
 
+<!-- Inline positioning safety -->
 <style>
 #chatbot-wrapper {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9999;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
 }
 #chatbot-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: #2563eb;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    cursor: pointer;
-    z-index: 10000;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 10000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 #chatbot-box {
-    display: none;
-    flex-direction: column;
-    width: 320px;
-    height: 420px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    overflow: hidden;
-    position: fixed; /* important */
-    bottom: 90px;
-    right: 20px;
-    z-index: 9999;
+  display: none;
+  flex-direction: column;
+  width: 320px;
+  height: 420px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  overflow: hidden;
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  z-index: 9999;
 }
 </style>

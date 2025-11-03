@@ -17,14 +17,14 @@ def chatbot_response(request):
     # Parse JSON body
     try:
         body = json.loads(request.body.decode('utf-8') or "{}")
-        user_message = body.get("message", "").strip().lower()
+        user_message = (body.get("message", "") or "").strip()
     except Exception:
         user_message = ""
 
     if not user_message:
         return JsonResponse({"response": "Please type something to ask."})
 
-    # Check if medicine exists
+    # Check if medicine exists (simple contains match)
     medicine = Medicine.objects.filter(name__icontains=user_message).first()
     if medicine:
         bot_reply = (

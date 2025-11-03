@@ -1,70 +1,89 @@
-// chatbot/static/js/chatbot.js
-(function() {
-  const icon = document.getElementById("chatbot-icon");
-  const box = document.getElementById("chatbot-box");
-  const closeBtn = document.getElementById("chatbot-close");
-  const sendBtn = document.getElementById("chatbot-send");
-  const input = document.getElementById("chatbot-input");
-  const messages = document.getElementById("chatbot-messages");
+// chatbot/static/chatbot/js/chatbot.js
+(function () {
+  const icon = document.getElementById('chatbot-icon');
+  const box = document.getElementById('chatbot-box');
+  const closeBtn = document.getElementById('chatbot-close');
+  const sendBtn = document.getElementById('chatbot-send');
+  const input = document.getElementById('chatbot-input');
+  const messages = document.getElementById('chatbot-messages');
 
-  if (!icon || !box) return; // safety check
+  if (!icon || !box || !sendBtn || !input || !messages) {
+    console.warn('Chatbot: missing DOM elements, widget disabled.');
+    return;
+  }
 
-  // Open chatbot
-  icon.addEventListener("click", () => {
-    box.style.display = "flex";
-  });
+  function openChat() {
+    box.style.display = 'flex';
+    box.setAttribute('aria-hidden', 'false');
+    input.focus();
+    scrollToBottom();
+  }
 
-  // Close chatbot
-  closeBtn.addEventListener("click", () => {
-    box.style.display = "none";
-  });
+  function closeChat() {
+    box.style.display = 'none';
+    box.setAttribute('aria-hidden', 'true');
+  }
 
-  // Append messages
-  function appendMessage(sender, text, color="#333") {
-    const msg = document.createElement("div");
-    msg.style.margin = "6px 0";
-    msg.innerHTML = `<b style="color:${color}">${sender}:</b> ${text}`;
-    messages.appendChild(msg);
+  function scrollToBottom() {
     messages.scrollTop = messages.scrollHeight;
   }
 
-  // CSRF token
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      document.cookie.split(";").forEach(cookie => {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + "=")) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        }
-      });
-    }
-    return cookieValue;
+  function appendMessage(text, sender='bot') {
+    const container = document.createElement('div');
+    container.className = sender === 'user' ? 'user-message' : 'bot-message';
+    if (sender === 'user') container.innerText = text;
+    else container.innerHTML = text;
+    messages.appendChild(container);
+    scrollToBottom();
   }
 
-  // Send message
   async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
-    appendMessage("You", text, "#2563eb");
-    input.value = "";
+    appendMessage(text, 'user');
+    input.value = '';
+
+    const loading = document.createElement('div');
+    loading.className = 'bot-message';
+    loading.textContent = '⏳ Looking up...';
+    messages.appendChild(loading);
+    scrollToBottom();
+
+    const endpoint = window.CHATBOT_ENDPOINT || '/chatbot/get_response/';
+
     try {
-      const res = await fetch("/chatbot/", { // note: match your urls.py
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken")
-        },
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text })
       });
-      const data = await res.json();
-      appendMessage("Bot", data.response || "Error processing request.", "#000");
+
+      if (loading && loading.parentNode) loading.remove();
+
+      if (!resp.ok) {
+        appendMessage("Sorry, I couldn't reach the server. Please try again later.", 'bot');
+        return;
+      }
+
+      const data = await resp.json();
+      appendMessage(data.response || "I didn't get anything back.", 'bot');
     } catch (err) {
-      appendMessage("Bot", "⚠️ Connection error.", "red");
+      if (loading && loading.parentNode) loading.remove();
+      appendMessage("Network error. Please check your connection.", 'bot');
+      console.error('Chatbot send error', err);
     }
   }
 
-  sendBtn.addEventListener("click", sendMessage);
-  input.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
+  icon.addEventListener('click', () => {
+    if (box.style.display === 'flex') closeChat();
+    else openChat();
+  });
 
+  closeBtn.addEventListener('click', closeChat);
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+  });
+
+  closeChat();
 })();

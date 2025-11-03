@@ -1,6 +1,6 @@
 /* chatbot/static/chatbot/css/chatbot.css */
 /* Floating chat bubble (bottom-right) */
-#pharmacy-chatbot-widget {
+#chatbot-wrapper {
   position: fixed;
   right: 20px;
   bottom: 20px;
@@ -8,23 +8,22 @@
   font-family: Arial, sans-serif;
 }
 
-/* Bubble button */
-.chat-bubble {
-  width: 52px;
-  height: 52px;
+#chatbot-icon {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  border: none;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-  background: #0d6efd;
-  color: #fff;
-  font-size: 22px;
-  cursor: pointer;
+  background-color: #2563eb;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 10000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-/* Chat window */
+/* Chat window (chat-container matches HTML) */
 .chat-container {
   width: 320px;
   max-width: calc(100vw - 40px);
@@ -113,5 +112,5 @@
 /* small screens */
 @media (max-width: 420px) {
   .chat-container { right: 8px; left: 8px; width: auto; height: 60vh; }
-  .chat-bubble { width: 46px; height: 46px; font-size: 20px; }
+  #chatbot-icon { width: 46px; height: 46px; font-size: 20px; }
 }
