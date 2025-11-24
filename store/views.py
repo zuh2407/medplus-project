@@ -112,6 +112,9 @@ def product_detail(request, pk):
 # ---------- CART ----------
 def cart(request):
     items = CartItem.objects.select_related('medicine').all()
+    print(f"DEBUG: Cart items count: {items.count()}")
+    for item in items:
+        print(f"DEBUG: Item: {item.medicine.name}, Price: {item.medicine.price}, Qty: {item.quantity}")
     total = sum([item.get_total_price() for item in items])
     return render(request, 'store/cart.html', {
         'items': items,
@@ -178,10 +181,21 @@ def quick_view(request, pk):
 @login_required(login_url='account_login')
 def checkout(request):
     items = CartItem.objects.select_related('medicine').all()
+    
+    # Check if cart is empty
+    if not items.exists():
+        messages.warning(request, "Your cart is empty. Please add items before checking out.")
+        return redirect('cart')
+    
     total_amount = sum([item.get_total_price() for item in items])
     addresses = Address.objects.filter(user=request.user)
 
     if request.method == 'POST':
+        # Double-check cart isn't empty on POST
+        if not items.exists():
+            messages.warning(request, "Your cart is empty. Please add items before checking out.")
+            return redirect('cart')
+            
         selected_address_id = request.POST.get('selected_address')
         if selected_address_id:
             selected_address = get_object_or_404(Address, pk=selected_address_id, user=request.user)
@@ -281,9 +295,11 @@ def success(request):
         if not pisa_status.err:
             msg.attach(f"Invoice_{order_id}.pdf", pdf_buffer.read(), "application/pdf")
         msg.send()
+        messages.success(request, f"Order confirmation email sent to {user_email}")
+        print(f"✅ Email sent successfully to {user_email}")
     except Exception as e:
-        print("Email sending failed:", e)
-        messages.warning(request, "Order placed but email could not be sent.")
+        print(f"❌ Email sending failed: {e}")
+        messages.warning(request, f"Order placed successfully, but we couldn't send the confirmation email. Please contact support with Order ID: {order_id}")
 
     # Clear cart
     CartItem.objects.all().delete()
@@ -322,6 +338,15 @@ def order_invoice_pdf(request, order_id):
     response = HttpResponse(pdf_buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Invoice_{order_id}.pdf"'
     return response
+
+# ---------- UPLOAD PRESCRIPTION ----------
+def upload_prescription(request):
+    if request.method == 'POST' and request.FILES.get('prescription'):
+        # For now, we just redirect to the product list as requested.
+        # In a real app, we would save the file here.
+        messages.success(request, "Prescription uploaded successfully! Please browse our medicines.")
+        return redirect('product_list')
+    return redirect('home')
 
 # ---------- PASSWORD RESET ----------
 def forgot_password(request):

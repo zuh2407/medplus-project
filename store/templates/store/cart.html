@@ -1,48 +1,124 @@
 {% extends 'store/base.html' %}
 {% load static %}
-{% block content %}
-<h2 class="mt-4">Your Cart</h2>
 
-{% if items %}
-<div class="row row-cols-1 row-cols-md-2 g-4 mt-3">
-  {% for item in items %}
-  <div class="col">
-    <div class="card shadow-sm h-100">
-      <div class="row g-0 align-items-center">
-        <div class="col-md-4">
-          {% if item.medicine.image %}
-          <img src="{{ item.medicine.image.url }}" class="img-fluid rounded-start" alt="{{ item.medicine.name }}">
-          {% else %}
-          <img src="{% static 'images/sample_medicine.jpg' %}" class="img-fluid rounded-start" alt="{{ item.medicine.name }}">
-          {% endif %}
+{% block content %}
+<div class="container py-5">
+  <h2 class="fw-bold mb-4">Shopping Cart</h2>
+
+  {% if items %}
+  <div class="row g-5">
+    <!-- Cart Items List -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+          {% for item in items %}
+          <div class="p-4 border-bottom {% if forloop.last %}border-0{% endif %}">
+            <div class="row align-items-center">
+              <div class="col-md-2 mb-3 mb-md-0">
+                {% if item.medicine.image %}
+                <img src="{{ item.medicine.image.url }}" alt="{{ item.medicine.name }}"
+                  class="img-fluid rounded-3 mix-blend-multiply">
+                {% else %}
+                <img src="{% static 'images/sample_medicine.jpg' %}" alt="Sample"
+                  class="img-fluid rounded-3 mix-blend-multiply">
+                {% endif %}
+              </div>
+              <div class="col-md-4 mb-3 mb-md-0">
+                <h5 class="fw-bold text-dark mb-1">{{ item.medicine.name }}</h5>
+                <p class="text-muted small mb-0">{{ item.medicine.category }}</p>
+                <p class="text-primary fw-bold mb-0 mt-1">${{ item.medicine.price }}</p>
+              </div>
+              <div class="col-md-3 mb-3 mb-md-0">
+                <div class="d-flex align-items-center border rounded-pill px-2 py-1" style="width: fit-content;">
+                  <form action="{% url 'update_cart' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <input type="hidden" name="action" value="decrease">
+                    <button type="submit" class="btn btn-link text-muted p-1 text-decoration-none"><i
+                        class="fa-solid fa-minus small"></i></button>
+                  </form>
+                  <span class="mx-3 fw-bold">{{ item.quantity }}</span>
+                  <form action="{% url 'update_cart' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                    <input type="hidden" name="action" value="increase">
+                    <button type="submit" class="btn btn-link text-primary p-1 text-decoration-none"><i
+                        class="fa-solid fa-plus small"></i></button>
+                  </form>
+                </div>
+              </div>
+              <div
+                class="col-md-3 text-md-end d-flex align-items-center justify-content-between justify-content-md-end gap-3">
+                <span class="h5 fw-bold text-dark mb-0">${{ item.get_total_price }}</span>
+                <form action="{% url 'update_cart' %}" method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="item_id" value="{{ item.id }}">
+                  <input type="hidden" name="action" value="remove">
+                  <button type="submit" class="btn btn-light text-danger rounded-circle shadow-sm hover-scale"
+                    title="Remove">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
         </div>
-        <div class="col-md-8">
-          <div class="card-body">
-            <h5 class="card-title">{{ item.medicine.name }}</h5>
-            <p class="card-text mb-1"><strong>Price:</strong> ${{ item.medicine.price }}</p>
-            <p class="card-text mb-1"><strong>Total:</strong> ${{ item.get_total_price }}</p>
-            <form method="post" action="{% url 'update_cart' %}" class="d-flex gap-2 align-items-center">
-              {% csrf_token %}
-              <input type="hidden" name="item_id" value="{{ item.id }}">
-              <button class="btn btn-sm btn-outline-success" name="action" value="increase"><i class="fa-solid fa-plus"></i></button>
-              <span>{{ item.quantity }}</span>
-              <button class="btn btn-sm btn-outline-warning" name="action" value="decrease"><i class="fa-solid fa-minus"></i></button>
-              <button class="btn btn-sm btn-outline-danger" name="action" value="remove"><i class="fa-solid fa-trash"></i></button>
-            </form>
+      </div>
+      <div class="mt-4">
+        <a href="{% url 'product_list' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+          <i class="fa-solid fa-arrow-left me-2"></i> Continue Shopping
+        </a>
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 100px; z-index: 1;">
+        <h5 class="fw-bold mb-4">Order Summary</h5>
+        <div class="d-flex justify-content-between mb-3">
+          <span class="text-muted">Subtotal</span>
+          <span class="fw-bold">${{ total }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+          <span class="text-muted">Shipping</span>
+          <span class="text-success fw-bold">Free</span>
+        </div>
+        <div class="d-flex justify-content-between mb-3">
+          <span class="text-muted">Tax (Estimated)</span>
+          <span class="fw-bold">$0.00</span>
+        </div>
+        <hr class="my-4">
+        <div class="d-flex justify-content-between mb-4">
+          <span class="h5 fw-bold">Total</span>
+          <span class="h4 fw-bold text-primary">${{ total }}</span>
+        </div>
+        <a href="{% url 'checkout' %}" class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm hover-scale">
+          Proceed to Checkout <i class="fa-solid fa-arrow-right ms-2"></i>
+        </a>
+        <div class="mt-4 text-center">
+          <p class="text-muted small mb-2">We accept</p>
+          <div class="d-flex justify-content-center gap-2 text-muted fs-4">
+            <i class="fa-brands fa-cc-visa"></i>
+            <i class="fa-brands fa-cc-mastercard"></i>
+            <i class="fa-brands fa-cc-amex"></i>
+            <i class="fa-brands fa-cc-paypal"></i>
           </div>
         </div>
       </div>
     </div>
   </div>
-  {% endfor %}
+  {% else %}
+  <div class="text-center py-5">
+    <div class="mb-4 text-muted opacity-25">
+      <i class="fa-solid fa-cart-shopping fa-6x"></i>
+    </div>
+    <h3 class="fw-bold text-dark mb-3">Your cart is empty</h3>
+    <p class="text-muted mb-4">Looks like you haven't added any medicines yet.</p>
+    <a href="{% url 'product_list' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+      Start Shopping
+    </a>
+  </div>
+  {% endif %}
 </div>
-
-<div class="text-end mt-4">
-  <h4>Total: ${{ total }}</h4>
-  <a href="{% url 'checkout' %}" class="btn btn-success">Proceed to Checkout</a>
-</div>
-
-{% else %}
-<p>Your cart is empty. <a href="{% url 'product_list' %}">Shop now</a></p>
-{% endif %}
 {% endblock %}
