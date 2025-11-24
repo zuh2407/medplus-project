@@ -1,26 +1,47 @@
+# ============================
 # Python
+# ============================
 __pycache__/
 *.pyc
 *.pyo
 
-# Django
+# ============================
+# Django project files
+# ============================
 db.sqlite3
-media/
+
+# Ignore collected static files (can be recreated)
 staticfiles/
 static_collected/
 
+# ✅ Allow app-level static images (for chatbot)
+!chatbot/static/
+!chatbot/static/chatbot/
+!chatbot/static/chatbot/images/
+
+# ✅ Keep media folder tracked (since you don't want to hide it)
+# (no "media/" rule here — it's visible to Git)
+
+# ============================
 # Virtual environment
+# ============================
 .venv/
 venv/
 env/
 
-# Environment
+# ============================
+# Environment variables
+# ============================
 .env
 
-# IDE
+# ============================
+# IDE / Editor
+# ============================
 .vscode/
 .idea/
 
-# OS files
+# ============================
+# OS-generated files
+# ============================
 .DS_Store
 Thumbs.db
