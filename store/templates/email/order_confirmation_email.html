@@ -1,56 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmation - {{ order_id }}</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f9f9f9; color: #333; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
-    h1 { color: #27ae60; }
-    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-    th, td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
-    th { background-color: #27ae60; color: #fff; }
-    a.button { display: inline-block; padding: 10px 20px; background-color: #27ae60; color: #fff; text-decoration: none; border-radius: 5px; margin-top: 10px; }
-    .footer { font-size: 12px; color: #777; margin-top: 20px; text-align: center; }
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f4f6f8;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+      padding: 40px 20px;
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .header p {
+      margin: 10px 0 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+
+    .content {
+      padding: 40px 30px;
+    }
+
+    .order-info {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border: 1px solid #e9ecef;
+    }
+
+    .order-info p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .order-info strong {
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 2px solid #e9ecef;
+      color: #6c757d;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    td {
+      padding: 16px 12px;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 14px;
+    }
+
+    .total-row td {
+      border-top: 2px solid #333;
+      border-bottom: none;
+      font-weight: 700;
+      font-size: 16px;
+      padding-top: 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 28px;
+      background-color: #0d6efd;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+
+    .btn:hover {
+      background-color: #0b5ed7;
+    }
+
+    .footer {
+      background-color: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      font-size: 13px;
+      color: #6c757d;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .footer a {
+      color: #0d6efd;
+      text-decoration: none;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <h1>Thank you for your order, {{ username }}!</h1>
-    <p>Your Order ID: <strong>{{ order_id }}</strong></p>
+    <div class="header">
+      <h1>Order Confirmed!</h1>
+      <p>Thank you for choosing MedPlus</p>
+    </div>
 
-    <h2>Order Summary:</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Medicine</th>
-          <th>Quantity</th>
-          <th>Price ($)</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in order_items %}
-        <tr>
-          <td>{{ item.name }}</td>
-          <td>{{ item.quantity }}</td>
-          <td>{{ item.price }}</td>
-        </tr>
-        {% endfor %}
-        <tr>
-          <td colspan="2"><strong>Total</strong></td>
-          <td><strong>{{ total_price }}</strong></td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="content">
+      <p>Hi {{ username }},</p>
+      <p>We're getting your order ready to be shipped. We will notify you when it has been sent.</p>
 
-    <p>You can download your invoice here:</p>
-    <a href="{{ pdf_url }}" class="button">Download PDF Invoice</a>
+      <div class="order-info">
+        <p>Order ID: <strong>{{ order_id }}</strong></p>
+        <p>Date: <strong>{{ now|date:"F j, Y" }}</strong></p>
+      </div>
 
-    <p>Visit us again: <a href="{{ home_url }}">{{ home_url }}</a></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th style="text-align: center;">Qty</th>
+            <th style="text-align: right;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order_items %}
+          <tr>
+            <td>
+              <strong>{{ item.name }}</strong>
+            </td>
+            <td style="text-align: center;">{{ item.quantity }}</td>
+            <td style="text-align: right;">${{ item.price|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+          <tr class="total-row">
+            <td colspan="2">Total</td>
+            <td style="text-align: right;">${{ total_price|floatformat:2 }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="text-align: center;">
+        <a href="{{ pdf_url }}" class="btn">Download Invoice PDF</a>
+      </div>
+    </div>
 
     <div class="footer">
-      &copy; {{ now.year }} MedPlus. All rights reserved.
+      <p>Need help? <a href="{{ home_url }}">Contact Support</a></p>
+      <p>&copy; {{ now.year }} MedPlus. All rights reserved.</p>
     </div>
   </div>
 </body>
+
 </html>

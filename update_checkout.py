@@ -1,4 +1,4 @@
-{% extends 'store/base.html' %}
+checkout_html = """{% extends 'store/base.html' %}
 {% load widget_tweaks %}
 {% load static %}
 
@@ -115,4 +115,9 @@
   box-shadow: 0 8px 16px rgba(13, 110, 253, 0.3) !important;
 }
 </style>
-{% endblock %}
+{% endblock %}"""
+
+with open('store/templates/store/checkout.html', 'w', encoding='utf-8') as f:
+    f.write(checkout_html)
+
+print("Successfully updated checkout.html")
