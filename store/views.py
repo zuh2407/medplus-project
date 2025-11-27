@@ -15,6 +15,7 @@ import uuid
 from io import BytesIO
 from xhtml2pdf import pisa
 
+
 from .models import Medicine, CartItem, Address
 from .forms import SignupForm, LoginForm, AddressForm
 

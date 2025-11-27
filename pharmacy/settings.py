@@ -38,7 +38,6 @@ INSTALLED_APPS = [
 
     # Your apps
     "store",
-    "chatbot",
     "pharmacy",
 
     # Allauth
@@ -90,6 +89,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "pharmacy.wsgi.application"
 
+# -------------------------------
+# DATABASE
+# -------------------------------
 # -------------------------------
 # DATABASE
 # -------------------------------

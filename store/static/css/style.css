@@ -71,73 +71,11 @@ body {
     font-weight: 600;
 }
 
-.features p {
-    font-size: 0.95rem;
-    color: #495057;
-}
-
-/* ----------------- CARDS ----------------- */
-.medicine-card {
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform .25s ease, box-shadow .25s ease;
-    cursor: pointer;
-    background: #fff;
-}
-
-.medicine-card img {
-    height: 220px;
-    object-fit: cover;
-    width: 100%;
-}
-
-.medicine-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 30px rgba(2, 6, 23, 0.08);
-}
-
-.card-body h5 {
-    font-size: 1rem;
-    margin-bottom: 5px;
-}
-
-.card-body p {
-    font-size: 0.95rem;
-    margin-bottom: 10px;
-}
-
-/* ----------------- BUTTONS ----------------- */
-.btn-primary {
-    background: linear-gradient(90deg, #0b5ed7, #0a58ca);
-    border: none;
-    color: #fff;
-    transition: background 0.3s ease;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(90deg, #0a58ca, #084298);
-}
-
-.btn-success {
-    background: linear-gradient(90deg, #28a745, #218838);
-    border: none;
-    color: #fff;
-    transition: background 0.3s ease;
-}
-
-.btn-success:hover {
-    background: linear-gradient(90deg, #218838, #1e7e34);
-}
-
-/* ----------------- MINI-CART ----------------- */
-.mini-cart {
-    max-width: 320px;
-    max-height: 400px;
-    overflow-y: auto;
-    border-radius: 5px;
-    padding: 10px;
-    background-color: #fff;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+overflow-y: auto;
+border-radius: 5px;
+padding: 10px;
+background-color: #fff;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .mini-cart .d-flex.border {
