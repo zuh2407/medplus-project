@@ -34,7 +34,7 @@ MedPlus allows users to:
 ## 🎥 Demo Video
 
 Watch the demo video showing the full workflow:  
-👉 [Watch on YouTube](https://www.youtube.com/watch?v=EB5bOYivwFg)
+👉 [Watch on YouTube](https://www.youtube.com/watch?v=13m2sn-IwzM)
 
 ---
 
