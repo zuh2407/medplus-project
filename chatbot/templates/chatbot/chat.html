@@ -1,0 +1,36 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'chatbot/chat.css' %}">
+
+<!-- Chat Button -->
+<button id="chat-toggle-btn" class="chat-toggle-btn">
+    <i class="fa-solid fa-comments"></i>
+</button>
+
+<!-- Chat Window -->
+<div id="chat-window" class="chat-window d-none">
+    <div class="chat-header">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-robot me-2"></i>
+            <h6 class="mb-0">Pharmacy Assistant</h6>
+        </div>
+        <button id="chat-close-btn" class="btn-close btn-close-white small"></button>
+    </div>
+
+    <div id="chat-messages" class="chat-messages">
+        <div class="message bot-message">
+            Hello! How can I help you today?
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <form id="chat-form" class="d-flex gap-2">
+            <input type="text" id="chat-input" class="form-control form-control-sm" placeholder="Type your message..."
+                required>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'chatbot/chat.js' %}"></script>

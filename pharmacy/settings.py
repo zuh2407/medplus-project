@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     # Your apps
     "store",
     "pharmacy",
+    "chatbot",
 
     # Allauth
     "django.contrib.sites",
@@ -184,6 +185,9 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+
+# Chatbot Backend
+FASTAPI_URL = os.getenv("FASTAPI_URL", "http://127.0.0.1:8001")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

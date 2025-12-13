@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+    container_name: pharmacy_django
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - FASTAPI_URL=http://fastapi:8001
+      - DEBUG=True
+    depends_on:
+      - fastapi
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastapi
+    container_name: pharmacy_fastapi
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=pharmacy.settings

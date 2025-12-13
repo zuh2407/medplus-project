@@ -4,8 +4,49 @@
 {% block content %}
 
 <!-- HERO SECTION -->
-<section class="hero-section py-5 bg-white">
-  <div class="container py-lg-5">
+<style>
+  .hero-blob {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    animation: morph 8s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+  }
+
+  @keyframes morph {
+    0% {
+      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    }
+
+    50% {
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    }
+
+    100% {
+      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    }
+  }
+
+  .hero-img-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-20px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
+  }
+</style>
+<section class="hero-section py-5 bg-white overflow-hidden position-relative">
+  <div class="hero-blob position-absolute top-50 start-50 translate-middle"
+    style="width: 60vw; height: 60vw; min-width: 500px; min-height: 500px; z-index: 0;"></div>
+  <div class="container py-lg-5 position-relative z-1">
     <div class="row align-items-center g-5">
       <div class="col-lg-6 order-lg-1 order-2">
         <div class="pe-lg-5">
@@ -40,11 +81,10 @@
         </div>
       </div>
       <div class="col-lg-6 order-lg-2 order-1">
-        <div class="position-relative">
-          <div class="bg-primary bg-opacity-10 rounded-circle position-absolute top-50 start-50 translate-middle z-0"
-            style="width: 120%; height: 120%;"></div>
+        <div class="position-relative text-center">
+
           <img src="{% static 'images/hero-bg.jpg' %}" alt="Healthcare"
-            class="img-fluid rounded-4 shadow-lg position-relative z-1"
+            class="img-fluid hero-img-float position-relative z-1"
             onerror="this.src='https://placehold.co/600x400/e2e8f0/1e293b?text=Healthcare+Essentials'">
         </div>
       </div>

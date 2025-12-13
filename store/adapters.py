@@ -16,7 +16,11 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
             return
 
         try:
-            existing_user = User.objects.get(email__iexact=email)
+            # Handle case where multiple users have same email
+            users = User.objects.filter(email__iexact=email).order_by('-last_login')
+            if not users.exists():
+                return
+            existing_user = users.first()
         except User.DoesNotExist:
             return  # No existing user, will create new
 

@@ -13,6 +13,7 @@ import stripe
 import random
 import uuid
 from io import BytesIO
+import requests
 from xhtml2pdf import pisa
 
 
@@ -343,10 +344,34 @@ def order_invoice_pdf(request, order_id):
 # ---------- UPLOAD PRESCRIPTION ----------
 def upload_prescription(request):
     if request.method == 'POST' and request.FILES.get('prescription'):
-        # For now, we just redirect to the product list as requested.
-        # In a real app, we would save the file here.
-        messages.success(request, "Prescription uploaded successfully! Please browse our medicines.")
-        return redirect('product_list')
+        uploaded_file = request.FILES['prescription']
+        
+        # Prepare file for FastAPI
+        files = {'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
+        fastapi_url = f"{settings.FASTAPI_URL}/prescription"
+        
+        try:
+            response = requests.post(fastapi_url, files=files, timeout=10)
+            response.raise_for_status()
+            result = response.json()
+            
+            # Pass results to a template or redirect with data in session
+            # For unifcation, we show results in the same product list style or a dedicated results page.
+            # Here we just flash the message and redirect for now, simulating the "unification" flow
+            # In a real scenario, we'd render 'store/prescription_results.html' with 'result['products']'
+            
+            product_names = [p['name'] for p in result.get('products', [])]
+            if product_names:
+                messages.success(request, f"Prescription processed! Found: {', '.join(product_names)}")
+            else:
+                messages.warning(request, "Prescription processed, but no specific medicines matched in stock.")
+                
+            return redirect('product_list')
+            
+        except requests.exceptions.RequestException as e:
+            messages.error(request, f"Error processing prescription: {str(e)}")
+            return redirect('home')
+
     return redirect('home')
 
 # ---------- PASSWORD RESET ----------
