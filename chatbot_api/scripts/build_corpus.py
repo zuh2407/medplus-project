@@ -4,20 +4,34 @@ import os
 import time
 
 # List of medical topics to build our "Real" Corpus
+# List of medical topics to build our "Real" Corpus
 TOPICS = [
-    # Common Diseases
-    "Influenza", "Common cold", "COVID-19", "Diabetes mellitus", "Hypertension", 
-    "Asthma", "Migraine", "Arthritis", "Gastroesophageal reflux disease", "Pneumonia",
-    "Bronchitis", "Allergy", "Insomnia", "Anxiety disorder", "Depression (mood)",
-    
-    # Common Medications (Generic Names)
-    "Paracetamol", "Ibuprofen", "Aspirin", "Amoxicillin", "Metformin", 
-    "Lisinopril", "Atorvastatin", "Omeprazole", "Furosemide", "Gabapentin",
-    "Metoprolol", "Losartan", "Albuterol", "Cetirizine", "Loratadine",
-    
-    # Vitamins & Supplements
-    "Vitamin D", "Vitamin C", "Calcium", "Iron supplement", "Magnesium",
-    "Zinc", "Fish oil", "Melatonin"
+    # Top 100+ Prescribed & OTC Drugs
+    "Acetaminophen", "Adalimumab", "Albuterol", "Alendronate", "Allopurinol", "Alprazolam", "Amitriptyline",
+    "Amlodipine", "Amoxicillin", "Aripiprazole", "Aspirin", "Atenolol", "Atorvastatin", "Azithromycin",
+    "Baclofen", "Benazepril", "Benzonatate", "Bisoprolol", "Budesonide", "Bupropion", "Buspirone",
+    "Carvedilol", "Cefdinir", "Celecoxib", "Cephalexin", "Cetirizine", "Ciprofloxacin", "Citalopram",
+    "Clindamycin", "Clonazepam", "Clonidine", "Clopidogrel", "Codeine", "Cyclobenzaprine", "Cymbalta",
+    "Desvenlafaxine", "Dextroamphetamine", "Diazepam", "Diclofenac", "Dicyclomine", "Digoxin", "Diltiazem",
+    "Divalproex", "Docusate", "Donepezil", "Doxycycline", "Duloxetine", "Enalapril", "Escitalopram",
+    "Esomeprazole", "Estradiol", "Eszopiclone", "Ezetimibe", "Famotidine", "Fenofibrate", "Ferrous sulfate",
+    "Finasteride", "Fluconazole", "Fluoxetine", "Fluticasone", "Folic acid", "Furosemide", "Gabapentin",
+    "Gemfibrozil", "Glimepiride", "Glipizide", "Glyburide", "Guanfacine", "Hydralazine", "Hydrochlorothiazide",
+    "Hydrocodone", "Hydrocortisone", "Hydroxychloroquine", "Hydroxyzine", "Ibuprofen", "Insulin",
+    "Irbesartan", "Isosorbide", "Lamotrigine", "Lansoprazole", "Latanoprost", "Levetiracetam", "Levofloxacin",
+    "Levothyroxine", "Lidocaine", "Lisdexamfetamine", "Lisinopril", "Lithium", "Loratadine", "Lorazepam",
+    "Losartan", "Lovastatin", "Magnesium", "Meclizine", "Melatonin", "Meloxicam", "Memantine", "Metformin",
+    "Methocarbamol", "Methotrexate", "Methylphenidate", "Methylprednisolone", "Metoclopramide", "Metoprolol",
+    "Metronidazole", "Mirtazapine", "Montelukast", "Morphine", "Mupirocin", "Naproxen", "Nifedipine",
+    "Nitrofurantoin", "Nitroglycerin", "Nortriptyline", "Nystatin", "Olanzapine", "Omeprazole", "Ondansetron",
+    "Oxybutynin", "Oxycodone", "Pantoprazole", "Paroxetine", "Penicillin", "Phentermine", "Phenytoin",
+    "Pioglitazone", "Potassium chloride", "Pravastatin", "Prednisolone", "Prednisone", "Pregabalin",
+    "Promethazine", "Propranolol", "Quetiapine", "Quinapril", "Rabeprazole", "Raloxifene", "Ramipril",
+    "Ranitidine", "Risperidone", "Rivaroxaban", "Ropinirole", "Rosuvastatin", "Sertraline", "Sildenafil",
+    "Simvastatin", "Sitagliptin", "Spironolactone", "Sumatriptan", "Tadalafil", "Tamsulosin", "Temazepam",
+    "Terazosin", "Testosterone", "Thyroid", "Timolol", "Tiotropium", "Tizanidine", "Topiramate",
+    "Tramadol", "Trazodone", "Triamcinolone", "Triamterene", "Valacyclovir", "Valsartan", "Venlafaxine",
+    "Verapamil", "Vitamin C", "Vitamin D", "Warfarin", "Zolpidem"
 ]
 
 CORPUS_DIR = os.path.join(os.path.dirname(__file__), '../corpus/cleaned')
@@ -62,9 +76,9 @@ def fetch_openfda_label(drug_name):
                 # Combine into a useful text block
                 full_text = f"**Drug Info for {drug_name}**\n\n**Indications:** {indications}\n\n**Warnings:** {warnings}\n\n**Dosage:** {dosage}"
                 
-                # Truncate if too long (some labels are massive)
-                if len(full_text) > 2000:
-                    full_text = full_text[:2000] + "..."
+                # Removed truncation to ensure completeness as requested by user
+                # if len(full_text) > 2000:
+                #    full_text = full_text[:2000] + "..."
                     
                 return {
                     "id": f"openfda_{drug_name}",

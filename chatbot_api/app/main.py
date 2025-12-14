@@ -57,6 +57,16 @@ def chat(request: ChatRequest):
     
     if intent == "pharmacy":
         response = pharmacy_bot.process_instruction(request.message)
+    elif intent == "small_talk":
+        import random
+        greetings = [
+            "Hello! I am your AI Pharmacy Assistant. How can I help you today?",
+            "Hi there! I can help you find medicines or answer health questions.",
+            "Greetings! Feel free to ask about our stock or any health concerns.",
+            "I'm doing great, thanks for asking! How can I assist you?",
+            "You're welcome! Let me know if you need anything else."
+        ]
+        response = random.choice(greetings)
     else:
         if health_bot:
             response = health_bot.search(request.message)

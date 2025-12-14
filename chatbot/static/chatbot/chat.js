@@ -67,10 +67,72 @@ document.addEventListener('DOMContentLoaded', function () {
         return cookieValue;
     }
 
+    function formatMessage(text) {
+        let formatted = text;
+
+        // 1. Headers (## Header) -> <h3>Header</h3>
+        formatted = formatted.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+
+        // 2. Bold (**text**) -> <strong>text</strong>
+        formatted = formatted.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+
+        // 2.1 Fix Wall of Text: Add breaks before specific bold headers to ensure spacing
+        // We look for <strong> tags that likely represent sections (Indications, Warnings, etc)
+        formatted = formatted.replace(/([^\n>])(<strong>)/gim, '$1<br><br>$2');
+
+        // 3. Lists
+        // Split by lines to handle list logic
+        let lines = formatted.split('\n');
+        let inList = false;     // For <ul>
+        let inNumList = false;  // For <ol>
+        let result = '';
+
+        lines.forEach(line => {
+            let trimLine = line.trim();
+
+            // Unordered List (- Item)
+            if (trimLine.startsWith('- ')) {
+                if (!inList) { result += '<ul>'; inList = true; }
+                if (inNumList) { result += '</ol>'; inNumList = false; }
+                result += `<li>${trimLine.substring(2)}</li>`;
+
+                // Numbered List (1. Item)
+            } else if (/^\d+\.\s/.test(trimLine)) {
+                if (!inNumList) { result += '<ol>'; inNumList = true; }
+                if (inList) { result += '</ul>'; inList = false; }
+                // Remove "1. "
+                let content = trimLine.replace(/^\d+\.\s/, '');
+                result += `<li>${content}</li>`;
+
+            } else {
+                // Close lists if we hit normal text
+                if (inList) { result += '</ul>'; inList = false; }
+                if (inNumList) { result += '</ol>'; inNumList = false; }
+
+                // Only add content if it's not empty string (prevents excess breaks from split)
+                if (trimLine) {
+                    result += line + '<br>';
+                }
+            }
+        });
+
+        if (inList) result += '</ul>';
+        if (inNumList) result += '</ol>';
+
+        return result;
+    }
+
     function addMessage(text, sender) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', `${sender}-message`);
-        messageDiv.textContent = text;
+
+        if (sender === 'bot') {
+            // Render HTML for bot
+            messageDiv.innerHTML = formatMessage(text);
+        } else {
+            // Text only for user to prevent XSS from user input
+            messageDiv.textContent = text;
+        }
 
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
