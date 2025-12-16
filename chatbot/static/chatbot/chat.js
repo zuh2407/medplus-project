@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatToggleBtn = document.getElementById('chat-toggle-btn');
     const chatWindow = document.getElementById('chat-window');
     const chatCloseBtn = document.getElementById('chat-close-btn');
+    const chatMaximizeBtn = document.getElementById('chat-maximize-btn');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
@@ -17,6 +18,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // Close Chat Window
     chatCloseBtn.addEventListener('click', () => {
         chatWindow.classList.add('d-none');
+    });
+
+    // Toggle Maximize/Minimize
+    chatMaximizeBtn.addEventListener('click', () => {
+        chatWindow.classList.toggle('maximized');
+        const icon = chatMaximizeBtn.querySelector('i');
+        if (chatWindow.classList.contains('maximized')) {
+            icon.classList.replace('fa-expand', 'fa-compress');
+            chatMaximizeBtn.title = "Minimize";
+        } else {
+            icon.classList.replace('fa-compress', 'fa-expand');
+            chatMaximizeBtn.title = "Maximize";
+        }
     });
 
     // Handle Form Submission

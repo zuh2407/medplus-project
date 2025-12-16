@@ -37,7 +37,17 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: slideIn 0.3s ease-out;
+}
+
+.chat-window.maximized {
+    width: 600px;
+    height: 80vh;
+    right: 50%;
+    transform: translateX(50%);
+    /* Center horizontally */
+    bottom: 50px;
 }
 
 .chat-window.d-none {
