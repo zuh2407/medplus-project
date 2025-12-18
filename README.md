@@ -248,6 +248,20 @@ Open `http://<PC_IP>:8000` on your phone.
 
 ---
 
+### 9️⃣ Run with Docker (Alternative)
+
+If you prefer to run the entire system (Frontend + Backend) in containers:
+
+1.  **Build and Start**:
+    ```bash
+    docker-compose up --build
+    ```
+2.  **Access the App**:
+    *   Frontend: [http://localhost:8000](http://localhost:8000)
+    *   Backend: [http://localhost:8001](http://localhost:8001)
+
+---
+
 ## 🧑‍🤝‍🧑 Collaborator Workflow
 
 1. Accept GitHub invite

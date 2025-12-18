@@ -1,5 +1,6 @@
 import os
 import django
+import re
 # Trigger reload (Corpus Updated)
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +37,7 @@ app.add_middleware(
 # Request Models
 class ChatRequest(BaseModel):
     message: str
+    session_id: str = None  # Optional for backward compatibility
 
 # Initialize Bots
 pharmacy_bot = PharmacyBot()
@@ -56,17 +58,29 @@ def chat(request: ChatRequest):
     intent = router_model.route_query(request.message)
     
     if intent == "pharmacy":
-        response = pharmacy_bot.process_instruction(request.message)
+        response = pharmacy_bot.process_instruction(request.message, session_id=request.session_id)
     elif intent == "small_talk":
-        import random
-        greetings = [
-            "Hello! I am your AI Pharmacy Assistant. How can I help you today?",
-            "Hi there! I can help you find medicines or answer health questions.",
-            "Greetings! Feel free to ask about our stock or any health concerns.",
-            "I'm doing great, thanks for asking! How can I assist you?",
-            "You're welcome! Let me know if you need anything else."
-        ]
-        response = random.choice(greetings)
+        msg = request.message.lower()
+        if any(x in msg for x in ["thank", "thx", "ty"]):
+            response = "You're welcome! Let me know if you need anything else. 💊"
+        elif "bye" in msg or "goodbye" in msg:
+            response = "Goodbye! Stay healthy! 👋"
+        elif any(x in msg for x in ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]):
+            response = "Hello! I am your AI Pharmacy Assistant. How can I help you today? 🤖"
+        elif any(x in msg for x in ["super", "great", "awesome", "perfect", "cool", "nice"]):
+             response = "Glad to hear it! Let me know if you need anything else. 🌟"
+        elif "how are you" in msg:
+             response = "I'm functioning perfectly, thanks for asking! 🔋 How can I help you?"
+        elif any(x in msg for x in ["who built", "created you", "creator", "built u", "created u"]):
+            response = "I was built by a team of forward-thinking developers to make healthcare easier for you! 🚀"
+        elif any(x in msg for x in ["real person", "human", "robot"]):
+            response = "I am a virtual assistant, not a real person. But I'm always here to help you find medicines and health info! 🤖"
+        elif any(x in msg for x in ["real person", "human", "robot"]):
+            response = "I am a virtual assistant, not a real person. But I'm always here to help you find medicines and health info! 🤖"
+        elif re.search(r"who\s+(?:.*\s+)?(are|r)\s+(?:.*\s+)?(you|u)", msg):
+            response = "I am an AI assistant designed to help you with pharmacy products and health information."
+        else:
+            response = "I'm here to help! Feel free to ask about medicines or health advice."
     else:
         if health_bot:
             response = health_bot.search(request.message)

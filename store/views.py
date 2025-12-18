@@ -81,7 +81,7 @@ def product_list(request):
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
 
-    medicines = Medicine.objects.all().order_by('-created_at')
+    medicines = Medicine.objects.all().order_by('pk')
     if q:
         medicines = medicines.filter(name__icontains=q)
     if category:

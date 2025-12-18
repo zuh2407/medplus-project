@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', function () {
             addMessage(message, 'user');
             chatInput.value = '';
 
+            // Get or Create Session ID
+            let sessionId = localStorage.getItem('chat_session_id');
+            if (!sessionId) {
+                sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('chat_session_id', sessionId);
+            }
+
             // Send to Backend
             fetch('/chat/send/', {
                 method: 'POST',
@@ -50,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({ message: message })
+                body: JSON.stringify({ message: message, session_id: sessionId })
             })
                 .then(response => response.json())
                 .then(data => {

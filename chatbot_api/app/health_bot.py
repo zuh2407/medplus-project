@@ -18,6 +18,7 @@ class HealthBot:
         # Synonym Mapping
         self.synonyms = {
             "panadol": "acetaminophen",
+            "paracetamol": "acetaminophen",
             "tylenol": "acetaminophen",
             "advil": "ibuprofen",
             "motrin": "ibuprofen",
@@ -30,6 +31,7 @@ class HealthBot:
 
         self.documents = []
         self.index = None
+        self.generic_lookup = {}
         
         self._initialize_resources()
 
@@ -39,6 +41,15 @@ class HealthBot:
              with open(self.corpus_path, 'r', encoding='utf-8') as f:
                  self.documents = json.load(f)
              print(f"Loaded {len(self.documents)} documents from corpus.")
+             
+             # Build generic lookup for keyword boosting
+             for idx, doc in enumerate(self.documents):
+                 # Assume format "**Drug Info for NAME**"
+                 match = re.search(r'\*\*Drug Info for (.*?)\*\*', doc.get('text', ''))
+                 if match:
+                     name = match.group(1).lower().strip()
+                     self.generic_lookup[name] = idx
+                     
         else:
             print("Warning: Corpus file not found.")
             return
@@ -156,24 +167,31 @@ class HealthBot:
         
         # Display Title Logic: "Panadol (Acetaminophen)" or just "Acetaminophen"
         if query_brand and query_brand.lower() != generic_name.lower() and query_brand.lower() not in generic_name.lower():
-             display_title = f"{query_brand.title()} ({generic_name})"
+             display_title = f"{query_brand.title()} (same as {generic_name})"
         else:
              display_title = generic_name
 
         # 2. Extract Sections
+        # We need flexible lookaheads because sections might appear in any order or be missing
+        # Common keys in FDA labels: Indications, Dosage, Contraindications, Warnings, Adverse Reactions, Drug Interactions
         patterns = {
-            "Indications": r'\*\*Indications:\*\*(.*?)(?=\*\*Warnings:|\*\*Dosage:|$)',
-            "Warnings": r'\*\*Warnings:\*\*(.*?)(?=\*\*Dosage:|$)',
-            "Dosage": r'\*\*Dosage:\*\*(.*?)(?=$)'
+            "Indications": r'\*\*Indications:\*\*(.*?)(?=\*\*Dosage:|\*\*Contraindications:|\*\*Warnings:|\*\*Drug Interactions:|$)',
+            "Dosage": r'\*\*Dosage:\*\*(.*?)(?=\*\*Contraindications:|\*\*Warnings:|\*\*Drug Interactions:|$)',
+            "Contraindications": r'\*\*Contraindications:\*\*(.*?)(?=\*\*Warnings:|\*\*Drug Interactions:|\*\*Dosage:|$)',
+            "Warnings": r'\*\*Warnings:\*\*(.*?)(?=\*\*Drug Interactions:|\*\*Dosage:|\*\*Contraindications:|$)',
+            "Interactions": r'\*\*Drug Interactions:\*\*(.*?)(?=\*\*|$)'
         }
         
         sections = {}
+        has_content = False
         for key, pattern in patterns.items():
             match = re.search(pattern, raw_text, re.DOTALL | re.IGNORECASE)
             if match:
                 content = match.group(1).strip()
                 # Convert to bullet points
                 sections[key] = self._to_bullet_points(content)
+                if sections[key] != "Information not available.":
+                    has_content = True
             else:
                 sections[key] = "Information not available."
 
@@ -184,12 +202,26 @@ class HealthBot:
         
         if sections.get('Indications') and sections['Indications'] != "Information not available.":
             response += f"**✅ Uses:**\n{sections['Indications']}\n\n"
+
+        if sections.get('Contraindications') and sections['Contraindications'] != "Information not available.":
+            response += f"**⛔ Do Not Use If:**\n{sections['Contraindications']}\n\n"
             
         if sections.get('Warnings') and sections['Warnings'] != "Information not available.":
             response += f"**⚠️ Warnings:**\n{sections['Warnings']}\n\n"
+
+        if sections.get('Interactions') and sections['Interactions'] != "Information not available.":
+            response += f"**🔁 Drug/Food Interactions:**\n{sections['Interactions']}\n\n"
             
         if sections.get('Dosage') and sections['Dosage'] != "Information not available.":
             response += f"**📋 Dosage:**\n{sections['Dosage']}"
+            
+        # Fallback: If parsing failed to extract sections, show simplified raw text
+        if not has_content:
+             # Basic cleanup of formatting artifacts
+             clean_text = raw_text.replace("**Indications:**", "").replace("**Warnings:**", "").replace("**Dosage:**", "").strip()
+             # Truncate if huge, but usually safe to show mostly
+             summary = clean_text[:600] + ("..." if len(clean_text) > 600 else "")
+             response += f"**ℹ️ General Information:**\n{summary}"
         
         return response.strip()
 
@@ -210,12 +242,29 @@ class HealthBot:
             if clean in self.synonyms:
                  brand_used = clean
                  break
+        
+        # 2. KEYWORD PRIORITY SEARCH
+        enhanced_words = enhanced_query.lower().split()
+        for word in enhanced_words:
+            clean = word.strip("?!.,")
+            if clean in self.generic_lookup:
+                print(f"Direct Keyword Match found: {clean}")
+                idx = self.generic_lookup[clean]
+                doc = self.documents[idx]
+                return "Here is the information I found:\n\n" + self._smart_format(doc['text'], query_brand=brand_used)
 
+        # 3. VECTOR SEARCH
         query_vector = self.model.encode([enhanced_query])
         
         # Return only the TOP result to avoid confusion (User requested precision)
         D, I = self.index.search(np.array(query_vector).astype('float32'), top_k) 
         
+        # Threshold Check for Relevance
+        # If distance is too high, it means the query is likely off-topic (e.g. "Capital of France")
+        # Calibrated value: Irrelevant queries ~1.8. Relevant ~0.5-0.9. Threshold set to 1.35.
+        if D[0][0] > 1.35:
+            return "I'm sorry, I can only help with questions related to medicines and health conditions. 🩺"
+
         results = []
         for i in range(top_k):
             idx = I[0][i]

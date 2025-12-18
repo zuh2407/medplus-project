@@ -9,6 +9,8 @@ class Medicine(models.Model):
         ('Personal Care', 'Personal Care'),
         ('Antibiotics', 'Antibiotics'),
         ('Painkiller', 'Painkillers'),
+        ('Prescription', 'Prescription'),
+        ('Other', 'Other'),
     ]
 
     name = models.CharField(max_length=200)

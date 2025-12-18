@@ -12,17 +12,16 @@ def chat_send(request):
         # Parse user message from JSON body
         data = json.loads(request.body)
         user_message = data.get('message', '')
+        session_id = data.get('session_id', None)
         
         if not user_message:
             return JsonResponse({'error': 'Message is required'}, status=400)
-
+        
         # Forward to FastAPI backend
         fastapi_url = f"{settings.FASTAPI_URL}/chat"
-        
-        # We assume FastAPI expects {"message": "..."} or similar
-        # Adjust payload as per FastAPI contract (Step 3). 
-        # For now, sending the same structure.
-        payload = {'message': user_message}
+
+        # We assume FastAPI expects {"message": "...", "session_id": "..."}
+        payload = {'message': user_message, 'session_id': session_id}
         
         try:
             response = requests.post(fastapi_url, json=payload, timeout=60)
