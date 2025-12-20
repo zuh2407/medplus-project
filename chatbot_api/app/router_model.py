@@ -9,7 +9,8 @@ class RouterModel:
             "stock", "available", "have", "do you have", "take",
             "prescription", "store", "shop",
             "cart", "add", "remove", "basket", "medicine", "drug",
-            "time", "hour", "open", "close", "when"
+            "time", "hour", "open", "close", "when",
+            "checkout", "pay", "payment"
         ]
         
         # Health Intents (informational)

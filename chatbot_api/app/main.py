@@ -1,7 +1,7 @@
 import os
 import django
 import re
-# Trigger reload (Corpus Updated)
+# Trigger reload (Force Update 3)
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -55,46 +55,59 @@ def read_root():
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-    intent = router_model.route_query(request.message)
-    
-    if intent == "pharmacy":
-        response = pharmacy_bot.process_instruction(request.message, session_id=request.session_id)
-    elif intent == "small_talk":
-        msg = request.message.lower()
-        if any(x in msg for x in ["thank", "thx", "ty"]):
-            response = "You're welcome! Let me know if you need anything else. 💊"
-        elif "bye" in msg or "goodbye" in msg:
-            response = "Goodbye! Stay healthy! 👋"
-        elif any(x in msg for x in ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]):
-            response = "Hello! I am your AI Pharmacy Assistant. How can I help you today? 🤖"
-        elif any(x in msg for x in ["super", "great", "awesome", "perfect", "cool", "nice"]):
-             response = "Glad to hear it! Let me know if you need anything else. 🌟"
-        elif "how are you" in msg:
-             response = "I'm functioning perfectly, thanks for asking! 🔋 How can I help you?"
-        elif any(x in msg for x in ["who built", "created you", "creator", "built u", "created u"]):
-            response = "I was built by a team of forward-thinking developers to make healthcare easier for you! 🚀"
-        elif any(x in msg for x in ["real person", "human", "robot"]):
-            response = "I am a virtual assistant, not a real person. But I'm always here to help you find medicines and health info! 🤖"
-        elif any(x in msg for x in ["real person", "human", "robot"]):
-            response = "I am a virtual assistant, not a real person. But I'm always here to help you find medicines and health info! 🤖"
-        elif re.search(r"who\s+(?:.*\s+)?(are|r)\s+(?:.*\s+)?(you|u)", msg):
-            response = "I am an AI assistant designed to help you with pharmacy products and health information."
+    try:
+        intent = router_model.route_query(request.message)
+        
+        if intent == "pharmacy":
+            response = pharmacy_bot.process_instruction(request.message, session_id=request.session_id)
+        elif intent == "small_talk":
+            msg = request.message.lower()
+            if any(x in msg for x in ["thank", "thx", "ty"]):
+                response = "You're welcome! Let me know if you need anything else. 💊"
+            elif "bye" in msg or "goodbye" in msg:
+                response = "Goodbye! Stay healthy! 👋"
+            elif any(x in msg for x in ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]):
+                response = "Hello! I am your AI Pharmacy Assistant. How can I help you today? 🤖"
+            elif any(x in msg for x in ["super", "great", "awesome", "perfect", "cool", "nice"]):
+                 response = "Glad to hear it! Let me know if you need anything else. 🌟"
+            elif "how are you" in msg:
+                 response = "I'm functioning perfectly, thanks for asking! 🔋 How can I help you?"
+            elif any(x in msg for x in ["who built", "created you", "creator", "built u", "created u"]):
+                response = "I was built by a team of forward-thinking developers to make healthcare easier for you! 🚀"
+            elif any(x in msg for x in ["real person", "human", "robot"]):
+                response = "I am a virtual assistant, not a real person. But I'm always here to help you find medicines and health info! 🤖"
+            elif any(x in msg for x in ["real person", "human", "robot"]):
+                response = "I am a virtual assistant, not a real person. But I'm always here to help you find medicines and health info! 🤖"
+            elif re.search(r"who\s+(?:.*\s+)?(are|r)\s+(?:.*\s+)?(you|u)", msg):
+                response = "I am an AI assistant designed to help you with pharmacy products and health information."
+            else:
+                response = "I'm here to help! Feel free to ask about medicines or health advice."
         else:
-            response = "I'm here to help! Feel free to ask about medicines or health advice."
-    else:
-        if health_bot:
-            response = health_bot.search(request.message)
-        else:
-            response = "I apologize, but my health information module is currently offline."
-            
-    return {"response": response, "intent": intent}
+            if health_bot:
+                response = health_bot.search(request.message)
+            else:
+                response = "I apologize, but my health information module is currently offline."
+                
+        return {"response": response, "intent": intent}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"response": f"INTERNAL ERROR: {str(e)}", "intent": "error"}
+
+from typing import Optional
 
 @app.post("/prescription")
-async def process_prescription(file: UploadFile = File(...)):
-    # Retrieve content
-    content = await file.read()
-    filename = file.filename
-    
-    # Process using Pharmacy Bot
-    result = pharmacy_bot.process_prescription(filename, content)
-    return result
+def process_prescription(file: UploadFile = File(...), session_id: Optional[str] = Form(None)):
+    try:
+        # Retrieve content
+        content = file.file.read()
+        filename = file.filename
+        
+        # Process using Pharmacy Bot
+        result = pharmacy_bot.process_prescription(filename, content, session_id=session_id)
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        # Return generic error structure used by view
+        return {"products": [], "message": f"INTERNAL ERROR: {str(e)}"}

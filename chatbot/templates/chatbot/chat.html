@@ -14,6 +14,10 @@
             <h6 class="mb-0">Pharmacy Assistant</h6>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <button id="chat-refresh-btn" class="btn-close-white small bg-transparent border-0 text-white"
+                title="Clear Chat History">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
             <button id="chat-maximize-btn" class="btn-close-white small bg-transparent border-0 text-white"
                 title="Maximize">
                 <i class="fa-solid fa-expand"></i>
@@ -29,8 +33,14 @@
     </div>
 
     <div class="chat-input-area">
-        <form id="chat-form" class="d-flex gap-2">
-            <input type="text" id="chat-input" class="form-control form-control-sm" placeholder="Type your message..."
+        <form id="chat-form" class="d-flex gap-2 align-items-center" enctype="multipart/form-data">
+            <label for="chat-file-upload" class="btn btn-sm btn-outline-secondary" style="cursor: pointer;"
+                title="Upload Prescription">
+                <i class="fa-solid fa-paperclip"></i>
+            </label>
+            <input type="file" id="chat-file-upload" class="d-none" accept=".pdf,.jpg,.jpeg,.png">
+
+            <input type="text" id="chat-input" class="form-control form-control-sm" placeholder="Type message..."
                 required>
             <button type="submit" class="btn btn-sm btn-primary">
                 <i class="fa-solid fa-paper-plane"></i>

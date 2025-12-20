@@ -341,7 +341,41 @@ def order_invoice_pdf(request, order_id):
     response['Content-Disposition'] = f'attachment; filename="Invoice_{order_id}.pdf"'
     return response
 
-# ---------- UPLOAD PRESCRIPTION ----------
+# ---------- CHATBOT PRESCRIPTION PROXY ----------
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+@require_POST
+def process_prescription_chat(request):
+    if request.FILES.get('file'):
+        uploaded_file = request.FILES['file']
+        session_id = request.POST.get('session_id')
+        
+        # Prepare for FastAPI
+        files = {'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
+        data = {'session_id': session_id} if session_id else {}
+        
+        fastapi_url = f"{settings.FASTAPI_URL}/prescription"
+        
+        try:
+            response = requests.post(fastapi_url, files=files, data=data, timeout=10)
+            try:
+                return JsonResponse(response.json(), status=response.status_code)
+            except ValueError:
+                # JSON Decode Failed - likely 500 HTML or 404 text
+                return JsonResponse({
+                    'message': f"Backend Error ({response.status_code}): {response.text[:200]}", 
+                    'products': []
+                }, status=502)
+            
+        except requests.exceptions.RequestException as e:
+            return JsonResponse({'message': f"Connection Error: {str(e)}", 'products': []}, status=500)
+        except Exception as e:
+            return JsonResponse({'message': f"Proxy Error: {str(e)}", 'products': []}, status=500)
+
+    return JsonResponse({'message': "No file provided"}, status=400)
+
+# ---------- UPLOAD PRESCRIPTION (Homepage Form) ----------
 def upload_prescription(request):
     if request.method == 'POST' and request.FILES.get('prescription'):
         uploaded_file = request.FILES['prescription']
@@ -355,16 +389,18 @@ def upload_prescription(request):
             response.raise_for_status()
             result = response.json()
             
-            # Pass results to a template or redirect with data in session
-            # For unifcation, we show results in the same product list style or a dedicated results page.
-            # Here we just flash the message and redirect for now, simulating the "unification" flow
-            # In a real scenario, we'd render 'store/prescription_results.html' with 'result['products']'
-            
             product_names = [p['name'] for p in result.get('products', [])]
             if product_names:
-                messages.success(request, f"Prescription processed! Found: {', '.join(product_names)}")
+                messages.success(request, f"Prescription processed! We do have {', '.join(product_names)} in our store!")
             else:
-                messages.warning(request, "Prescription processed, but no specific medicines matched in stock.")
+                # Use the message from the backend if possible, or a generic fallback
+                backend_msg = result.get('message', "We checked your prescription but currently do not have the prescribed items in stock.")
+                # Clean up the backend message a bit if it's too long
+                if "We analyzed" in backend_msg:
+                     # Keep it simple for the flash message
+                     messages.warning(request, "We checked your prescription but currently do not have the prescribed items in stock.")
+                else:
+                     messages.warning(request, backend_msg)
                 
             return redirect('product_list')
             

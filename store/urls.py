@@ -6,6 +6,7 @@ urlpatterns = [
     path("products/", views.product_list, name="product_list"),
     path("product/<int:pk>/", views.product_detail, name="product_detail"),
     path("upload-prescription/", views.upload_prescription, name="store_upload_prescription"),
+    path("prescription/", views.process_prescription_chat, name="chat_prescription_proxy"),
 
     # Cart URLs
     path("cart/", views.cart, name="cart"),
