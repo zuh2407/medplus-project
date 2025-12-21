@@ -105,7 +105,40 @@ class PharmacyBot:
              
         return found_medicines
 
+    def correct_typos(self, text: str) -> str:
+        """Corrects typos in common keywords using fuzzy matching."""
+        words = text.split()
+        corrected_words = []
+        
+        # Combine intent keywords with common stop words to avoid false positives on short words if needed
+        # But here we focus on intent keywords
+        target_words = SEARCH_INTENT_KEYWORDS + ["hello", "hi", "help", "cart", "remove", "add", "checkout", "open", "close", "hours", "time", "make", "dont", "prescription", "lost"]
+        
+        for word in words:
+            # Skip numbers or very short words unless specific known ones
+            if len(word) < 3 and word not in ["hi", "no", "ok"]: 
+                corrected_words.append(word)
+                continue
+                
+            # If word is already correct, keep it
+            if word.lower() in target_words:
+                corrected_words.append(word)
+                continue
+                
+            # Check for close matches
+            matches = difflib.get_close_matches(word.lower(), target_words, n=1, cutoff=0.7)
+            if matches:
+                 # Verify it's not a medicine name before replacing? 
+                 # Risky if medicine names look like keywords, but unlikely for "havr" -> "have"
+                 corrected_words.append(matches[0])
+            else:
+                 corrected_words.append(word)
+                 
+        return " ".join(corrected_words)
+
     def process_instruction(self, text: str, session_id: str = None) -> str:
+        # 1. Preprocess: Typos
+        text = self.correct_typos(text)
         text = text.lower()
         
         # 0. Safety/Exit Check
@@ -115,10 +148,13 @@ class PharmacyBot:
         # 0.1 Safety Guardrail (Illegal/Unethical Requests)
         # Prevents "buy without script" type queries
         illegal_patterns = [
-            r"without\s+(a\s+)?(script|prescription|rx)",
-            r"no\s+(script|prescription|rx)",
+            r"without\s+(a\s+)?(script|prescript|rx)",
+            r"(no|dont|don't|do\s+not)\s+(have\s+)?(a\s+)?(script|prescript|rx)",
             r"illegal",
-            r"under\s+(the\s+)?table"
+            r"under\s+(the\s+)?table",
+            r"lost\s+(my\s+)?(script|prescript|rx)",
+            r"lost\s+it", # Contextually risky if combined with controlled substances
+            r"without\s+seeing\s+a\s+doctor"
         ]
         for pattern in illegal_patterns:
             if re.search(pattern, text):
@@ -140,6 +176,66 @@ class PharmacyBot:
             else:
                 return "Your cart is empty. Please add some medicines first! 💊"
 
+        # 1.5 Cart Management Logic (Moved UP for Priority)
+        # We check this BEFORE Confirmation to catch "add panadol" or "remove X" explicitly
+        if "add" in text and ("cart" in text or text.strip().startswith("add") or " buy " in text):
+             # Check for "Add All"
+             if " all " in f" {text} " or text.endswith(" all"):
+                 # Bulk Add Logic
+                 # 1. Try to find medicines in the text (e.g. "add all panadol")
+                 found = self.find_medicines(text)
+                 
+                 # 2. If no medicines found in text, use Context (e.g. "add all")
+                 if not found and session_id and session_id in self.sessions:
+                     found = self.sessions[session_id].get("last_search", [])
+                 
+                 if found:
+                     msg = "Added the following to your cart:\n"
+                     total_added = 0
+                     from store.models import CartItem
+                     
+                     for med in found:
+                         self.add_to_cart_direct(med, session_id=session_id) # Reuse method (it updates context, which is fine)
+                         msg += f"- {med.name}\n"
+                         total_added += 1
+                     
+                     # Get updated total
+                     if session_id:
+                         cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
+                     else:
+                         cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
+
+                     msg += f"\nTotal Items: {total_added}\nCurrent Cart Total: ${cart_total:.2f}"
+                     return msg
+                 else:
+                     return "I couldn't find any medicines to add. Please specify, e.g., 'Add all Panadol'."
+
+             result = self.manage_cart(text, action="add", session_id=session_id)
+             
+             if result.startswith("I couldn't identify") and session_id and session_id in self.sessions:
+                 context = self.sessions[session_id]
+                 last_search = context.get("last_search", [])
+                 if last_search:
+                      return self.add_to_cart_direct(last_search[0], session_id=session_id)
+             
+             if result: return result
+             
+        if ("remove" in text or "delete" in text or "dlete" in text or "cancel" in text or "clear" in text or "empty" in text):
+            # Check for "Remove All" / "Clear Cart"
+            if "all" in text or "clear" in text or "empty" in text:
+                 from store.models import CartItem
+                 if session_id:
+                     CartItem.objects.filter(session_id=session_id).delete()
+                     if session_id in self.sessions:
+                         self.sessions[session_id]["last_added"] = None
+                         self.sessions[session_id]["last_search"] = []
+                 else:
+                     CartItem.objects.filter(session_id__isnull=True).delete()
+                 
+                 return "Your cart has been cleared. 🗑️"
+
+            return self.manage_cart(text, action="remove", session_id=session_id)
+
         # 1. Session Context Handling (Yes/Add it)
         confirmation_keywords = ["yes", "sure", "add it", "add to cart", "okay", "ok", "please", "take", "want", "buying", "correct", "right"]
         if session_id and session_id in self.sessions:
@@ -151,47 +247,70 @@ class PharmacyBot:
             if any(k in text for k in confirmation_keywords) and last_search:
                 # Relaxed length check (was < 5, now < 15 to allow conversational confirmation)
                 if len(text.split()) < 15: 
-                    # Ambiguity Check: If multiple items were found, don't just add the first one.
-                    if len(last_search) > 1:
-                         options = "\n".join([f"- {m.name} (${m.price})" for m in last_search[:5]])
-                         return f"I found multiple items. Which one would you like to add?\n\n{options}\n\nPlease type the name of the item."
+                    # CRITICAL: Guardrail for New Search Intent masquerading as Confirmation
+                    # e.g. "I want Panadol" contains "want" -> confirmation? NO.
+                    # Check if the user is naming a DIFFERENT medicine than the last search.
+                    
+                    found_new_meds = self.find_medicines(text)
+                    # Filter out if the found med is actually the SAME as last_search (then it IS a confirmation)
+                    true_new_meds = []
+                    last_search_names = [m.name.lower() for m in last_search]
+                    
+                    for m in found_new_meds:
+                        # Simple check: if name is significantly different
+                        is_same = False
+                        for lsn in last_search_names:
+                             if m.name.lower() in lsn or lsn in m.name.lower():
+                                 is_same = True
+                                 break
+                        if not is_same:
+                             true_new_meds.append(m)
+                    
+                    if true_new_meds:
+                        # If we found NEW medicines that are NOT the old one, pass through to Search Logic at the end
+                        pass 
+                    else:
+                        # Ambiguity Check: If multiple items were found, don't just add the first one.
+                        if len(last_search) > 1:
+                             options = "\n".join([f"- {m.name} (${m.price})" for m in last_search[:5]])
+                             return f"I found multiple items. Which one would you like to add?\n\n{options}\n\nPlease type the name of the item."
 
-                    target_med = last_search[0]
-                    
-                    # Quantity Parsing
-                    qty = 1
-                    # Use pending quantity from search if available
-                    if session_id and session_id in self.sessions:
-                         qty = self.sessions[session_id].get("pending_quantity", 1)
+                        target_med = last_search[0]
+                        
+                        # Quantity Parsing
+                        qty = 1
+                        # Use pending quantity from search if available
+                        if session_id and session_id in self.sessions:
+                             qty = self.sessions[session_id].get("pending_quantity", 1)
 
-                    # Allow override if user explicitly specified a NEW quantity in the confirmation
-                    # e.g. "Actually make it 2"
-                    # But be careful with "1st one" -> "one" maps to 1. 
-                    # If "one" is present but we have a pending quantity > 1, we might prefer pending.
-                    
-                    qty_map = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
-                    words = text.split()
-                    
-                    found_new_qty = False
-                    temp_qty = 1
-                    
-                    for w in words:
-                        if w.isdigit():
-                            temp_qty = int(w)
-                            found_new_qty = True
-                            break
-                        if w in qty_map:
-                             # Exclude "one" if it's likely part of "the one" or "first one" AND we have a pending quantity
-                             if w == "one" and qty > 1:
-                                 continue
-                             temp_qty = qty_map[w]
-                             found_new_qty = True
-                             break
-                    
-                    if found_new_qty:
-                        qty = temp_qty
-                    
-                    return self.add_to_cart_direct(target_med, quantity=qty, session_id=session_id)
+                        # Allow override if user explicitly specified a NEW quantity in the confirmation
+                        # e.g. "Actually make it 2"
+                        # But be careful with "1st one" -> "one" maps to 1. 
+                        # If "one" is present but we have a pending quantity > 1, we might prefer pending.
+                        
+                        qty_map = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+                        words = text.split()
+                        
+                        found_new_qty = False
+                        temp_qty = 1
+                        
+                        for w in words:
+                            if w.isdigit():
+                                temp_qty = int(w)
+                                found_new_qty = True
+                                break
+                            if w in qty_map:
+                                 # Exclude "one" if it's likely part of "the one" or "first one" AND we have a pending quantity
+                                 if w == "one" and qty > 1:
+                                     continue
+                                 temp_qty = qty_map[w]
+                                 found_new_qty = True
+                                 break
+                        
+                        if found_new_qty:
+                            qty = temp_qty
+                        
+                        return self.add_to_cart_direct(target_med, quantity=qty, session_id=session_id)
 
             # 1.1 Handle Selection from Ambiguity (e.g. "1st one" or "Panadol Extra")
             if last_search and len(last_search) > 1:
@@ -269,104 +388,82 @@ class PharmacyBot:
 
 
 
-        if ("make it" in text or "change to" in text or "update to" in text or "actually" in text):
-             # Extract Number
-             new_qty = -1
-             words = text.split()
-             qty_map = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
-             
-             for w in words:
-                 if w.isdigit():
-                     new_qty = int(w)
-                     break
-                 if w in qty_map:
-                     new_qty = qty_map[w]
-                     break
-             
-             if new_qty > 0 and session_id and session_id in self.sessions:
-                 context = self.sessions[session_id]
+        if ("make it" in text or "change to" in text or "update to" in text or "actually" in text or "sorry" in text):
+            # 0. Ambiguity Check: If "sorry remove 1", we should let "remove" logic handle it.
+            if "remove" in text or "delete" in text or "add" in text:
+                 pass # Fall through to explicit Add/Remove logic
+            else:
+                 # Extract Number
+                 new_qty = -1
+                 words = text.split()
+                 qty_map = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
                  
-                 # 1. Check for Pending Search Context (Prioritize this!)
-                 last_search = context.get("last_search", [])
-                 if last_search:
-                     if len(last_search) > 1:
-                         # Ambiguous: User searched "Panadol", got 3 results, then said "Make it 5".
-                         # We need to know WHICH one.
-                         context["pending_quantity"] = new_qty # Save the intended quantity!
-                         options = "\n".join([f"- {m.name} (${m.price})" for m in last_search[:5]])
-                         return f"I found multiple items. Which one would you like to make {new_qty}?\n\n{options}\n\nPlease type the name of the item."
-                     else:
-                         # Explicit: Only 1 item found (e.g. "Amoxicillin"), so "Make it 5" means "Add 5 Amoxicillin".
-                         target_med = last_search[0]
-                         return self.add_to_cart_direct(target_med, quantity=new_qty, session_id=session_id)
-
-                 # 2. Fallback: Update Last Added Item (Legacy behavior)
-                 last_added_med = context.get("last_added")
-                 if last_added_med:
-                     from store.models import CartItem
-                     # Find item in cart
-                     item_query = CartItem.objects.filter(medicine=last_added_med)
-                     if session_id:
-                         item_query = item_query.filter(session_id=session_id)
-                     else:
-                         item_query = item_query.filter(session_id__isnull=True)
+                 for w in words:
+                     if w.isdigit():
+                         new_qty = int(w)
+                         break
+                     if w in qty_map:
+                         new_qty = qty_map[w]
+                         break
+                 
+                 if new_qty > 0 and session_id and session_id in self.sessions:
+                     context = self.sessions[session_id]
                      
-                     if item_query.exists():
-                         item = item_query.first()
-                         item.quantity = new_qty # SET the quantity (don't add)
-                         item.save()
-                         
-                         # Recalculate Total
-                         if session_id:
-                             cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
+                     # 1. Check for Pending Search Context (Prioritize this!)
+                     last_search = context.get("last_search", [])
+                     if last_search:
+                         if len(last_search) > 1:
+                             # Ambiguous: User searched "Panadol", got 3 results, then said "Make it 5".
+                             # We need to know WHICH one.
+                             context["pending_quantity"] = new_qty # Save the intended quantity!
+                             options = "\n".join([f"- {m.name} (${m.price})" for m in last_search[:5]])
+                             return f"I found multiple items. Which one would you like to make {new_qty}?\n\n{options}\n\nPlease type the name of the item."
                          else:
-                             cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
+                             # Explicit: Only 1 item found (e.g. "Amoxicillin"), so "Make it 5" means "Add 5 Amoxicillin".
+                             target_med = last_search[0]
+                             return self.add_to_cart_direct(target_med, quantity=new_qty, session_id=session_id)
+    
+                     # 2. Fallback: Update Last Added Item (Legacy behavior)
+                     last_added_med = context.get("last_added")
+                     if last_added_med:
+                         from store.models import CartItem
+                         # Find item in cart
+                         item_query = CartItem.objects.filter(medicine=last_added_med)
+                         if session_id:
+                             item_query = item_query.filter(session_id=session_id)
+                         else:
+                             item_query = item_query.filter(session_id__isnull=True)
+                         
+                         if item_query.exists():
+                             item = item_query.first()
+                             item.quantity = new_qty # SET the quantity (don't add)
+                             item.save()
                              
-                         return f"Updated {item.medicine.name} to {new_qty} in your cart.\n\nCurrent Cart Total: ${cart_total}"
+                             # Recalculate Total
+                             if session_id:
+                                 cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
+                             else:
+                                 cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
+                                 
+                             return f"Updated {item.medicine.name} to {new_qty} in your cart.\n\nCurrent Cart Total: ${cart_total}"
         
-        # 2. Cart Management Logic
-        if "add" in text and ("cart" in text or text.strip().startswith("add") or " buy " in text):
-             # Check for "Add All"
-             if " all " in f" {text} " or text.endswith(" all"):
-                 # Bulk Add Logic
-                 # 1. Try to find medicines in the text (e.g. "add all panadol")
-                 found = self.find_medicines(text)
-                 
-                 # 2. If no medicines found in text, use Context (e.g. "add all")
-                 if not found and session_id and session_id in self.sessions:
-                     found = self.sessions[session_id].get("last_search", [])
-                 
-                 if found:
-                     msg = "Added the following to your cart:\n"
-                     total_added = 0
-                     from store.models import CartItem
-                     
-                     for med in found:
-                         self.add_to_cart_direct(med, session_id=session_id) # Reuse method (it updates context, which is fine)
-                         msg += f"- {med.name}\n"
-                         total_added += 1
-                     
-                     msg += f"\nTotal Items: {total_added}"
-                     return msg
-                 else:
-                     return "I couldn't find any medicines to add. Please specify, e.g., 'Add all Panadol'."
 
-             result = self.manage_cart(text, action="add", session_id=session_id)
-             
-             if result.startswith("I couldn't identify") and session_id and session_id in self.sessions:
-                 context = self.sessions[session_id]
-                 last_search = context.get("last_search", [])
-                 if last_search:
-                      return self.add_to_cart_direct(last_search[0], session_id=session_id)
-             
-             if result: return result
-             
-        if ("remove" in text or "delete" in text or "delte" in text or "cancel" in text):
-            return self.manage_cart(text, action="remove", session_id=session_id)
             
         greetings = ["hello", "hi", "hey", "hu", "hy", "helo", "hlo", "hii", "heyy", "ho"]
         if any(g in text.split() for g in greetings) or any(g in text for g in ["hello", "good morning"]):
             return "Hello! I am your Pharmacy Assistant.\n\nI can help you Check Prices, Check Stock, Process Prescriptions, or Manage your Cart (e.g. search for a medicine and just say 'Yes' to add it).\n\nHow can I help you today?"
+
+        # 1.5 Service Hours & Info
+        if ("time" in text or "hour" in text or "open" in text or "close" in text or "when" in text or "available" in text or "pharmacist" in text):
+            return (
+                "Here are our Service Hours:\n\n"
+                "Store Hours:\n"
+                "- Mon-Fri: 8:00 AM - 10:00 PM\n"
+                "- Sat-Sun: 9:00 AM - 9:00 PM\n\n"
+                "Pharmacist Availability:\n"
+                "- Mon-Fri: 9:00 AM - 6:00 PM\n"
+                "- Sat: 10:00 AM - 4:00 PM"
+            )
         
         if any(k in text for k in SEARCH_INTENT_KEYWORDS):
             # Check for Vague/Incomplete queries (e.g. "I need medicine for")
@@ -400,34 +497,57 @@ class PharmacyBot:
 
             found_medicines = self.find_medicines(text)
             
+            found_medicines = [m for m in found_medicines if not m.name.lower().startswith("test")]
+            
             if found_medicines:
                 if session_id:
                     self.sessions[session_id]["last_search"] = found_medicines
                 
-                # Check for direct match count to handle ambiguity immediately or later? 
-                # The existing logic checks last_search length during *confirmation*, which is fine.
-                # But if we found medicines, we just show them.
-                
                 response = "We have this in store:\n\n"
                 for p in found_medicines[:5]: 
-                    response += f"{p.name}\n"
-                    response += f"Price: ${p.price}\n\n"
+                    response += f"- **{p.name}** (${p.price})\n"
                 
-                response += "Would you like to add this to your cart?"
+                response += "\nWould you like to add this to your cart?"
                 return response
             else:
                 return "Sorry, we don't have that medicine in our store at the moment."
 
-        if "time" in text or "hour" in text or "open" in text or "close" in text or "when" in text or "available" in text:
-            return (
-                "Here are our Service Hours:\n\n"
-                "Store Hours:\n"
-                "- Mon-Fri: 8:00 AM - 10:00 PM\n"
-                "- Sat-Sun: 9:00 AM - 9:00 PM\n\n"
-                "Pharmacist Availability:\n"
-                "- Mon-Fri: 9:00 AM - 6:00 PM\n"
-                "- Sat: 10:00 AM - 4:00 PM"
-            )
+
+
+        # 3. View Cart Intent
+        # "What is in my cart", "show cart", "view cart"
+        # 3. View Cart Intent
+        # "What is in my cart", "show cart", "view cart", or just "cart" / "my cart"
+        # We assume if the user just says "cart", they want to see it.
+        is_view_cart = False
+        if "cart" in text:
+             if any(x in text for x in ["what", "show", "view", "check", "in my"]):
+                 is_view_cart = True
+             elif len(text.split()) <= 2: # "cart", "my cart"
+                 is_view_cart = True
+                 
+        if is_view_cart:
+            from store.models import CartItem
+            
+            cart_items = []
+            if session_id:
+                cart_items = CartItem.objects.filter(session_id=session_id)
+            else:
+                cart_items = CartItem.objects.filter(session_id__isnull=True)
+            
+            if not cart_items.exists():
+                return "Your cart is currently empty. 🛒"
+            
+            msg = "Here is what you have in your cart:\n\n"
+            total = 0
+            for item in cart_items:
+                item_total = item.get_total_price()
+                total += item_total
+                msg += f"- {item.quantity} x {item.medicine.name} (${item_total:.2f})\n"
+            
+            msg += f"\n**Total: ${total:.2f}**\n\n"
+            msg += "[ Checkout Now ](/checkout/)"
+            return msg
 
         return "I am not sure I understood that. You can ask me to check prices, find medicines, or add items to your cart. How can I help?"
 
@@ -456,39 +576,47 @@ class PharmacyBot:
         else:
             cart_Total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
              
-        return f"{quantity} x {medicine.name} added to your cart.\n\nCurrent Cart Total: ${cart_Total}"
+        return f"{quantity} x {medicine.name} added to your cart.\n\nItem Price: ${medicine.price * quantity:.2f}\nCurrent Cart Total: ${cart_Total:.2f}"
 
     def manage_cart(self, text: str, action: str, session_id: str = None) -> str:
         from store.models import CartItem, Medicine 
         
         words = text.split()
-        quantity = 1
-        qty_map = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+        quantity = 0 
+        explicit_qty = False
+        qty_map = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
         
         for w in words:
             if w.isdigit():
                 quantity = int(w)
+                explicit_qty = True
                 break
             if w in qty_map:
                 quantity = qty_map[w]
+                explicit_qty = True
                 break
+        
+        if not explicit_qty:
+            quantity = 1
                 
         medicines = Medicine.objects.all()
         target_med = None
+        # Sort by length to match "Panadol Extra" before "Panadol"
         all_medicines = sorted(list(medicines), key=lambda x: len(x.name), reverse=True)
         
         for med in all_medicines:
+             # Space-padded check to avoid partial matches like "Pan" in "Panadol"
+             # But simplistic 'in' check is okay if sorted by length
             if med.name.lower() in text:
                 target_med = med
                 break
         
-        if not target_med and action == "remove" and session_id and session_id in self.sessions:
-             last_added = self.sessions[session_id].get("last_added")
-             if last_added:
-                 target_med = last_added
-
+        if not target_med and action == "remove":
+             if session_id and session_id in self.sessions:
+                 target_med = self.sessions[session_id].get("last_added")
+        
         if not target_med:
-             return "I couldn't identify the medicine name to add/remove. Please say the exact product name, e.g., 'Add Panadol to cart'."
+             return "I couldn't identify the medicine name to available. Please say the exact product name, e.g., 'Add Panadol to cart'."
 
         if action == "add":
             if session_id:
@@ -511,7 +639,7 @@ class PharmacyBot:
             else:
                 cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
                 
-            return f"{quantity} x {target_med.name} added to your cart.\n\nCurrent Cart Total: ${cart_total}"
+            return f"{quantity} x {target_med.name} added to your cart.\n\nItem Price: ${target_med.price * quantity:.2f}\nCurrent Cart Total: ${cart_total:.2f}"
             
         elif action == "remove":
             try:
@@ -519,14 +647,26 @@ class PharmacyBot:
                     item = CartItem.objects.get(medicine=target_med, session_id=session_id)
                 else:
                     item = CartItem.objects.get(medicine=target_med, session_id__isnull=True)
-                    
-                item.delete()
                 
-                if session_id and session_id in self.sessions:
-                    if self.sessions[session_id].get("last_added") == target_med:
-                         self.sessions[session_id]["last_added"] = None
-
-                return f"{target_med.name} removed from your cart."
+                # Logic: If user specified a quantity (e.g. "remove 2") and it's less than what's in cart, decrement.
+                if explicit_qty and quantity < item.quantity:
+                     item.quantity -= quantity
+                     item.save()
+                     
+                     if session_id:
+                         cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
+                     else:
+                         cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
+                         
+                     return f"Removed {quantity} x {target_med.name} from your cart.\nRemaining: {item.quantity}\nCurrent Cart Total: ${cart_total:.2f}"
+                else:
+                    item.delete()
+                    
+                    if session_id and session_id in self.sessions:
+                        if self.sessions[session_id].get("last_added") == target_med:
+                             self.sessions[session_id]["last_added"] = None
+    
+                    return f"{target_med.name} removed from your cart."
             except CartItem.DoesNotExist:
                 return f"{target_med.name} is not in your cart."
                 
