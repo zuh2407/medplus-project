@@ -194,7 +194,7 @@ xhtml2pdf==0.2.17
 </details>
 
 #### 2. Configuration
-Copy `.env.example` to `.env` and configure your keys (Database, Google OAuth, etc.).
+Copy `.env.example` to `.env` and configure your keys (see **Configuration Guide** below for details).
 ```bash
 cp .env.example .env
 ```
@@ -209,6 +209,60 @@ python manage.py runserver 8000
 ```bash
 uvicorn chatbot_api.app.main:app --reload --port 8001
 ```
+
+
+---
+
+## 🔑 Configuration Guide (Environment Variables)
+
+To unlock the full functionality (Google Login, Payments, Email), you need to configure the `.env` file with your API keys.
+
+1.  **Copy the template**:
+    ```bash
+    cp .env.example .env
+    ```
+
+2.  **Edit `.env`** and fill in the details below:
+
+### 1. 📧 Email Settings (Gmail)
+Used for sending order confirmations and invoices.
+1.  Go to your **Google Account** > **Security**.
+2.  Enable **2-Step Verification**.
+3.  Go to **App Passwords** (search for it in the search bar).
+4.  Create a new app password (e.g., name it "MedPlus").
+5.  Update `.env`:
+    ```env
+    EMAIL_HOST_USER=your-email@gmail.com
+    EMAIL_HOST_PASSWORD=your-generated-app-password
+    ```
+
+### 2. 🌍 Google OAuth (Social Login)
+Enables "Sign in with Google".
+1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2.  Create a **New Project**.
+3.  Go to **APIs & Services** > **OAuth consent screen**:
+    *   Select **External**.
+    *   Fill in basic app info using your email.
+4.  Go to **Credentials** > **Create Credentials** > **OAuth client ID**:
+    *   **Application type**: Web application.
+    *   **Authorized JavaScript origins**: `http://127.0.0.1:8000` (and `http://localhost:8000`).
+    *   **Authorized redirect URIs**: `http://127.0.0.1:8000/accounts/google/login/callback/`.
+5.  Copy the **Client ID** and **Client Secret** to `.env`:
+    ```env
+    GOOGLE_CLIENT_ID=your-client-id
+    GOOGLE_CLIENT_SECRET=your-client-secret
+    ```
+6.  **Important**: In the Django Admin (`http://127.0.0.1:8000/admin/`), ensure **Sites** > **example.com** is changed to `127.0.0.1:8000` or that you have a site with ID=1 matching your domain.
+
+### 3. 💳 Stripe Payments
+Enables credit card processing during checkout.
+1.  Register at [Stripe Dashboard](https://dashboard.stripe.com/).
+2.  Go to **Developers** > **API keys**.
+3.  Copy the **Publishable key** and **Secret key** to `.env`:
+    ```env
+    STRIPE_PUBLIC_KEY=pk_test_...
+    STRIPE_SECRET_KEY=sk_test_...
+    ```
 
 ---
 
