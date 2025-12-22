@@ -23,11 +23,20 @@ It goes beyond standard shopping by providing an integrated health assistant cap
 -   **Responsive Design**: Mobile-friendly interface optimized for all devices.
 
 ### 🤖 AI Health Assistant (FastAPI + NLP)
--   **Hybrid Intent Routing**: Intelligently routes user queries between "Health Advice", "Pharmacy/Shopping", and "General Chat".
--   **Medical Knowledge Base**: Answers questions about symptoms, drug usages, and side effects using a curated medical corpus.
--   **Smart Pharmacy Search**: Users can ask "Do you have Aspirin?" or "Add 2 Panadol to cart" and the bot interacts directly with the store database.
--   **Contextual Awareness**: Maintains conversation context for follow-up questions.
--   **Safety Guardrails**: strict routing ensures medical advice is cautious and redirects to professionals when necessary.
+
+The chatbot is powered by a custom **Hybrid NLP Engine** that operates without relying on expensive external LLM APIs for core logic.
+
+#### 🧠 Intelligent Router
+The system uses a weighted keyword and intent scoring algorithm to analyze every user message. It dynamically routes queries to the correct specialized agent:
+-   **Health Intent**: ("I have a fever", "Side effects of Aspirin") -> Routes to `HealthBot`.
+-   **Pharmacy Intent**: ("Buy Panadol", "Add to cart") -> Routes to `PharmacyBot`.
+-   **General**: Handles greetings and small talk.
+
+#### 📚 Automated Medical Corpus (`healthdata.json`)
+We constructed a comprehensive medical knowledge base by automating the ingestion of authoritative drug data.
+-   **Structured Data**: stored in `healthdata.json`, this corpus contains structured fields for **Uses**, **Warnings**, and **Dosage**.
+-   **Deterministic Retrieval**: The bot queries this local corpus to provide safe, verified medical information for over **170+ common medications**, ensuring reliability compared to generative hallucinations.
+-   **Contextual Guardrails**: Strict safety filters ensure the bot refuses to answer dangerous queries or diagnose serious conditions.
 
 ---
 
