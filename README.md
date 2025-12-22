@@ -40,6 +40,38 @@ We constructed a comprehensive medical knowledge base by automating the ingestio
 
 ---
 
+## 🧠 NLP Architecture & Workflow
+
+This project leverages state-of-the-art NLP libraries to deliver accurate medical advice.
+
+### 📚 Core Libraries
+*   **[SentenceTransformers](https://www.sbert.net/)**: Used to generate dense vector embeddings for user queries and medical documents. We use the `all-MiniLM-L6-v2` model for its high performance/speed ratio.
+*   **[FAISS (Facebook AI Similarity Search)](https://github.com/facebookresearch/faiss)**: A library for efficient similarity search of dense vectors, allowing us to find the best matching drug info in milliseconds.
+
+### 🔄 The Smart Processing Pipeline
+
+1.  **Preprocessing & Synonym Mapping**
+    *   The bot first cleans the user input.
+    *   It applies a medical synonym dictionary (e.g., mapping "Advil" → "Ibuprofen") to ensure brand names are recognized as their generic counterparts.
+
+2.  **Semantic Embedding**
+    *   The cleaned query is passed through the **SentenceTransformer** model.
+    *   This converts the text into a **384-dimensional vector** representation that captures the *meaning* of the question, not just keywords.
+
+3.  **Vector Similarity Search (FAISS)**
+    *   We search this vector against our pre-computed **FAISS Index** of 170+ drug documents.
+    *   It retrieves the nearest neighbor (most semantically similar document).
+
+4.  **Relevance Thresholding**
+    *   The system checks the "L2 Distance" score from FAISS.
+    *   **Guardrail**: If the distance is > 1.5 (indicating the match is weak/irrelevant), the bot politely refuses to answer, preventing hallucinations on unrelated topics.
+
+5.  **Structured Response Generation**
+    *   If a match is found, the system parses the raw FDA label text.
+    *   It dynamically extracts sections like **Uses**, **Warnings**, and **Dosage** and formats them into a clean, easy-to-read Markdown response.
+
+---
+
 ## 🛠️ Tech Stack
 
 *   **Backend Frameworks**: Django 5 (Store), FastAPI (Chatbot API)
@@ -113,6 +145,7 @@ Django==5.2.7
 django-allauth==0.63.6
 django-widget-tweaks==1.5.0
 freetype-py==2.5.1
+faiss-cpu
 gunicorn==21.2.0
 html5lib==1.1
 idna==3.11
@@ -140,6 +173,7 @@ reportlab==4.4.4
 requests==2.32.5
 rlPyCairo==0.4.0
 scikit-learn==1.7.2
+sentence-transformers
 scipy==1.16.2
 six==1.17.0
 sqlparse==0.5.3
