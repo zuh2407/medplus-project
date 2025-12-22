@@ -24,8 +24,16 @@ User = get_user_model()
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # ---------- HELPER ----------
-def _cart_count():
-    return CartItem.objects.count() if CartItem.objects.exists() else 0
+def _get_cart_queryset(request):
+    if request.user.is_authenticated:
+        return CartItem.objects.filter(user=request.user)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        return CartItem.objects.filter(session_id=request.session.session_key)
+
+def _cart_count(request):
+    return _get_cart_queryset(request).count()
 
 # ---------- HOME ----------
 def home(request):
@@ -35,7 +43,7 @@ def home(request):
         'featured': featured,
         'new_arrivals': new_arrivals,
         'categories': Medicine.CATEGORY_CHOICES,
-        'cart_count': _cart_count(),
+        'cart_count': _cart_count(request),
     })
 
 # ---------- SIGNUP ----------
@@ -100,7 +108,7 @@ def product_list(request):
     return render(request, 'store/product_list.html', {
         'medicines': meds_page,
         'categories': Medicine.CATEGORY_CHOICES,
-        'cart_count': _cart_count(),
+        'cart_count': _cart_count(request),
     })
 
 # ---------- PRODUCT DETAIL ----------
@@ -108,12 +116,12 @@ def product_detail(request, pk):
     med = get_object_or_404(Medicine, pk=pk)
     return render(request, 'store/product_detail.html', {
         'med': med,
-        'cart_count': _cart_count(),
+        'cart_count': _cart_count(request),
     })
 
 # ---------- CART ----------
 def cart(request):
-    items = CartItem.objects.select_related('medicine').all()
+    items = _get_cart_queryset(request).select_related('medicine')
     print(f"DEBUG: Cart items count: {items.count()}")
     for item in items:
         print(f"DEBUG: Item: {item.medicine.name}, Price: {item.medicine.price}, Qty: {item.quantity}")
@@ -121,7 +129,7 @@ def cart(request):
     return render(request, 'store/cart.html', {
         'items': items,
         'total': total,
-        'cart_count': _cart_count()
+        'cart_count': _cart_count(request)
     })
 
 @require_POST
@@ -129,7 +137,8 @@ def update_cart(request):
     action = request.POST.get('action')
     item_id = request.POST.get('item_id')
     try:
-        item = CartItem.objects.get(pk=item_id)
+        # Secure lookup: Ensure the item belongs to the current user context
+        item = _get_cart_queryset(request).get(pk=item_id)
     except CartItem.DoesNotExist:
         return redirect('cart')
 
@@ -148,7 +157,7 @@ def update_cart(request):
 
 # ---------- MINI CART ----------
 def mini_cart(request):
-    items = CartItem.objects.select_related('medicine').all()
+    items = _get_cart_queryset(request).select_related('medicine')
     total = sum([it.get_total_price() for it in items])
     html = render_to_string('store/partials/_mini_cart.html', {'items': items, 'total': total}, request=request)
     return HttpResponse(html)
@@ -156,22 +165,53 @@ def mini_cart(request):
 # ---------- ADD TO CART ----------
 def add_to_cart(request, medicine_id):
     quantity = int(request.GET.get('quantity', 1))
-    item, created = CartItem.objects.get_or_create(medicine_id=medicine_id)
-    item.quantity += quantity if not created else quantity
-    item.save()
+    
+    # Establish session if needed
+    if not request.user.is_authenticated and not request.session.session_key:
+        request.session.create()
+
+    # Use get_or_create with correct scope params
+    defaults = {'quantity': 0} # We initialize 0 then add, or rely on existing logic
+    # Actually, we should just query manually to avoid complex kwargs logic with get_or_create
+    
+    qs = _get_cart_queryset(request).filter(medicine_id=medicine_id)
+    if qs.exists():
+        item = qs.first()
+        item.quantity += quantity
+        item.save()
+    else:
+        # Create new item with correct links
+        if request.user.is_authenticated:
+            item = CartItem.objects.create(medicine_id=medicine_id, user=request.user, quantity=quantity)
+        else:
+            item = CartItem.objects.create(medicine_id=medicine_id, session_id=request.session.session_key, quantity=quantity)
+
     return redirect('cart')
 
 @require_POST
 def add_to_cart_ajax(request, medicine_id):
     quantity = int(request.POST.get('quantity', 1))
-    item, created = CartItem.objects.get_or_create(medicine_id=medicine_id)
-    item.quantity += quantity if not created else quantity
-    item.save()
+    
+    if not request.user.is_authenticated and not request.session.session_key:
+        request.session.create()
+        
+    qs = _get_cart_queryset(request).filter(medicine_id=medicine_id)
+    if qs.exists():
+        item = qs.first()
+        item.quantity += quantity
+        item.save()
+    else:
+        if request.user.is_authenticated:
+            item = CartItem.objects.create(medicine_id=medicine_id, user=request.user, quantity=quantity)
+        else:
+            item = CartItem.objects.create(medicine_id=medicine_id, session_id=request.session.session_key, quantity=quantity)
+
+    items = _get_cart_queryset(request).select_related('medicine')
     mini_html = render_to_string('store/partials/_mini_cart.html', {
-        'items': CartItem.objects.select_related('medicine').all(),
-        'total': sum([float(it.get_total_price()) for it in CartItem.objects.all()])
+        'items': items,
+        'total': sum([float(it.get_total_price()) for it in items])
     }, request=request)
-    return JsonResponse({'success': True, 'mini_cart_html': mini_html, 'cart_count': _cart_count()})
+    return JsonResponse({'success': True, 'mini_cart_html': mini_html, 'cart_count': _cart_count(request)})
 
 # ---------- QUICK VIEW ----------
 def quick_view(request, pk):
@@ -181,8 +221,9 @@ def quick_view(request, pk):
 
 # ---------- CHECKOUT ----------
 @login_required(login_url='account_login')
+@login_required(login_url='account_login')
 def checkout(request):
-    items = CartItem.objects.select_related('medicine').all()
+    items = _get_cart_queryset(request).select_related('medicine')
     
     # Check if cart is empty
     if not items.exists():
@@ -211,7 +252,7 @@ def checkout(request):
                 messages.error(request, "Please fill all required address fields.")
                 return render(request, 'store/checkout.html', {
                     'items': items, 'total': total_amount, 'addresses': addresses,
-                    'form': form, 'cart_count': _cart_count(),
+                    'form': form, 'cart_count': _cart_count(request),
                     'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
                 })
 
@@ -235,7 +276,7 @@ def checkout(request):
 
     return render(request, 'store/checkout.html', {
         'items': items, 'total': total_amount, 'addresses': addresses,
-        'form': form, 'cart_count': _cart_count(),
+        'form': form, 'cart_count': _cart_count(request),
         'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
     })
 
@@ -243,7 +284,7 @@ def checkout(request):
 @login_required(login_url='account_login')
 def success(request):
     user_email = request.user.email
-    cart_items = CartItem.objects.select_related('medicine').all()
+    cart_items = _get_cart_queryset(request).select_related('medicine')
     if not cart_items.exists():
         messages.info(request, "Your cart is empty.")
         return redirect('home')
@@ -304,7 +345,7 @@ def success(request):
         messages.warning(request, f"Order placed successfully, but we couldn't send the confirmation email. Please contact support with Order ID: {order_id}")
 
     # Clear cart
-    CartItem.objects.all().delete()
+    _get_cart_queryset(request).delete()
 
     return render(request, "store/success.html", {
         "cart_count": 0,
@@ -350,6 +391,14 @@ def process_prescription_chat(request):
     if request.FILES.get('file'):
         uploaded_file = request.FILES['file']
         session_id = request.POST.get('session_id')
+        
+        if not request.user.is_authenticated:
+            # Return as a standard response that the frontend can display nicely
+            # Assuming frontend expects 'message' or 'response'
+            return JsonResponse({
+                'message': 'Please log in to upload prescriptions. 🔒',
+                'products': []
+            }, status=200)
         
         # Prepare for FastAPI
         files = {'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}

@@ -1,7 +1,7 @@
 import os
 import django
 import re
-# Trigger reload (Force Update 3)
+# Trigger reload (Force Update 9)
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -38,6 +38,7 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     message: str
     session_id: str = None  # Optional for backward compatibility
+    user_id: int = None # Add user_id to link cart items to user
 
 # Initialize Bots
 pharmacy_bot = PharmacyBot()
@@ -59,7 +60,7 @@ def chat(request: ChatRequest):
         intent = router_model.route_query(request.message)
         
         if intent == "pharmacy":
-            response = pharmacy_bot.process_instruction(request.message, session_id=request.session_id)
+            response = pharmacy_bot.process_instruction(request.message, session_id=request.session_id, user_id=request.user_id)
         elif intent == "small_talk":
             msg = request.message.lower()
             if any(x in msg for x in ["thank", "thx", "ty"]):
@@ -72,6 +73,10 @@ def chat(request: ChatRequest):
                  response = "Glad to hear it! Let me know if you need anything else. 🌟"
             elif "how are you" in msg:
                  response = "I'm functioning perfectly, thanks for asking! 🔋 How can I help you?"
+            elif any(x in msg for x in ["how is life", "how's life", "how are things", "how is it going", "hows life"]):
+                 response = "Life is great in the digital world! 🌐 Ready to help you with your health needs."
+            elif any(x in msg for x in ["whats up", "what's up", "wassup"]):
+                 response = "Not much, just here waiting to help you find the best medicines! 💊"
             elif any(x in msg for x in ["who built", "created you", "creator", "built u", "created u"]):
                 response = "I was built by a team of forward-thinking developers to make healthcare easier for you! 🚀"
             elif any(x in msg for x in ["real person", "human", "robot"]):

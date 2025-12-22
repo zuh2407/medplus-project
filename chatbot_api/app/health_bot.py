@@ -104,7 +104,7 @@ class HealthBot:
                 new_words.append(word)
         return " ".join(new_words)
 
-    def _to_bullet_points(self, text: str) -> str:
+    def _to_bullet_points(self, text: str, section_name: str = "") -> str:
         """Convert paragraph text into a clean bulleted list."""
         if not text or text == "Information not available.":
             return "Information not available."
@@ -130,6 +130,20 @@ class HealthBot:
         # Handle inline numbering like "1) item 2) item" or "1. item 2. item"
         # We replace them with ". " so the splitter below treats them as new sentences/bullets
         text = re.sub(r'\s\d+[\)\.]\s', '. ', text)
+
+        # CLEANUP: Remove redundant section name at start if present
+        # e.g. "Uses temporarily relieves..." (Section is Indications/Uses)
+        # e.g. "Warnings Liver warning..."
+        if section_name:
+            # Flexible match for common starts
+            # For Indications: remove "Uses"
+            if section_name == "Indications":
+                 text = re.sub(r'^Uses\s+', '', text.strip(), flags=re.IGNORECASE)
+            # For others: remove exact section name
+            elif section_name == "Warnings":
+                 text = re.sub(r'^Warnings\s+', '', text.strip(), flags=re.IGNORECASE)
+            elif section_name == "Dosage":
+                 text = re.sub(r'^Directions\s+', '', text.strip(), flags=re.IGNORECASE)
 
         # 2. Split by common delimiters (periods, semicolons). 
         # We look for periods that end a sentence (followed by space or end of string)
@@ -188,8 +202,8 @@ class HealthBot:
             match = re.search(pattern, raw_text, re.DOTALL | re.IGNORECASE)
             if match:
                 content = match.group(1).strip()
-                # Convert to bullet points
-                sections[key] = self._to_bullet_points(content)
+                # Convert to bullet points with section context
+                sections[key] = self._to_bullet_points(content, section_name=key)
                 if sections[key] != "Information not available.":
                     has_content = True
             else:
@@ -262,7 +276,8 @@ class HealthBot:
         # Threshold Check for Relevance
         # If distance is too high, it means the query is likely off-topic (e.g. "Capital of France")
         # Calibrated value: Irrelevant queries ~1.8. Relevant ~0.5-0.9. Threshold set to 1.35.
-        if D[0][0] > 1.35:
+        # UPDATE: Increased to 1.5 to catch "symptoms of flu" which might be marginally related to Aspirin/Acetaminophen texts
+        if D[0][0] > 1.5:
             return "I'm sorry, I can only help with questions related to medicines and health conditions. 🩺"
 
         results = []
@@ -274,7 +289,15 @@ class HealthBot:
                 results.append(formatted_text)
                 
         if results:
-            # Add the requested intro text
-            return "Here is the information I found:\n\n" + results[0]
+            # Check if query implies looking for condition symptoms rather than drug info
+            # e.g. "symptoms of fever", "signs of flu"
+            is_condition_query = re.search(r'\b(symptoms|signs|cause|what is|treat|help with|for)\b', query, re.IGNORECASE)
+            
+            # If asking about symptoms but we found a drug, phrase it carefully
+            # If asking about symptoms but we found a drug, phrase it carefully
+            if is_condition_query:
+                return "Here is the information I found:\n\n" + results[0]
+            else:
+                return "Here is the information I found:\n\n" + results[0]
             
         return "I couldn't find relevant health information for your query."

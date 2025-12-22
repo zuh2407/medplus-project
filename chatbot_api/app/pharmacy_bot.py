@@ -15,6 +15,8 @@ MEDICINE_ALIASES = {
     "motrin": "ibuprofen",
     "aspirin": "acetylsalicylic acid",
     "disprin": "acetylsalicylic acid",
+    "valium": "diazepam",
+    "xanax": "alprazolam",
     "voltarol": "diclofenac",
     "voltaren": "diclofenac",
     
@@ -136,7 +138,7 @@ class PharmacyBot:
                  
         return " ".join(corrected_words)
 
-    def process_instruction(self, text: str, session_id: str = None) -> str:
+    def process_instruction(self, text: str, session_id: str = None, user_id: int = None) -> str:
         # 1. Preprocess: Typos
         text = self.correct_typos(text)
         text = text.lower()
@@ -148,7 +150,7 @@ class PharmacyBot:
         # 0.1 Safety Guardrail (Illegal/Unethical Requests)
         # Prevents "buy without script" type queries
         illegal_patterns = [
-            r"without\s+(a\s+)?(script|prescript|rx)",
+            r"without\s+(?:[\w]+\s+){0,3}(script|prescript|rx)",
             r"(no|dont|don't|do\s+not)\s+(have\s+)?(a\s+)?(script|prescript|rx)",
             r"illegal",
             r"under\s+(the\s+)?table",
@@ -165,7 +167,9 @@ class PharmacyBot:
             from store.models import CartItem
             cart_total = 0
             # Ensure we look at the SESSION specific cart
-            if session_id:
+            if user_id:
+                 cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(user_id=user_id))
+            elif session_id:
                 cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
             else:
                 # Fallback (should be avoided in multi-user)
@@ -195,7 +199,7 @@ class PharmacyBot:
                      from store.models import CartItem
                      
                      for med in found:
-                         self.add_to_cart_direct(med, session_id=session_id) # Reuse method (it updates context, which is fine)
+                         self.add_to_cart_direct(med, session_id=session_id, user_id=user_id) # Reuse method (it updates context, which is fine)
                          msg += f"- {med.name}\n"
                          total_added += 1
                      
@@ -210,13 +214,13 @@ class PharmacyBot:
                  else:
                      return "I couldn't find any medicines to add. Please specify, e.g., 'Add all Panadol'."
 
-             result = self.manage_cart(text, action="add", session_id=session_id)
+             result = self.manage_cart(text, action="add", session_id=session_id, user_id=user_id)
              
              if result.startswith("I couldn't identify") and session_id and session_id in self.sessions:
                  context = self.sessions[session_id]
                  last_search = context.get("last_search", [])
                  if last_search:
-                      return self.add_to_cart_direct(last_search[0], session_id=session_id)
+                      return self.add_to_cart_direct(last_search[0], session_id=session_id, user_id=user_id)
              
              if result: return result
              
@@ -224,7 +228,9 @@ class PharmacyBot:
             # Check for "Remove All" / "Clear Cart"
             if "all" in text or "clear" in text or "empty" in text:
                  from store.models import CartItem
-                 if session_id:
+                 if user_id:
+                     CartItem.objects.filter(user_id=user_id).delete()
+                 elif session_id:
                      CartItem.objects.filter(session_id=session_id).delete()
                      if session_id in self.sessions:
                          self.sessions[session_id]["last_added"] = None
@@ -234,7 +240,7 @@ class PharmacyBot:
                  
                  return "Your cart has been cleared. 🗑️"
 
-            return self.manage_cart(text, action="remove", session_id=session_id)
+            return self.manage_cart(text, action="remove", session_id=session_id, user_id=user_id)
 
         # 1. Session Context Handling (Yes/Add it)
         confirmation_keywords = ["yes", "sure", "add it", "add to cart", "okay", "ok", "please", "take", "want", "buying", "correct", "right"]
@@ -310,7 +316,7 @@ class PharmacyBot:
                         if found_new_qty:
                             qty = temp_qty
                         
-                        return self.add_to_cart_direct(target_med, quantity=qty, session_id=session_id)
+                        return self.add_to_cart_direct(target_med, quantity=qty, session_id=session_id, user_id=user_id)
 
             # 1.1 Handle Selection from Ambiguity (e.g. "1st one" or "Panadol Extra")
             if last_search and len(last_search) > 1:
@@ -384,7 +390,7 @@ class PharmacyBot:
                     if session_id and session_id in self.sessions:
                         qty = self.sessions[session_id].get("pending_quantity", 1)
                         
-                    return self.add_to_cart_direct(target_med, quantity=qty, session_id=session_id)
+                    return self.add_to_cart_direct(target_med, quantity=qty, session_id=session_id, user_id=user_id)
 
 
 
@@ -421,15 +427,33 @@ class PharmacyBot:
                          else:
                              # Explicit: Only 1 item found (e.g. "Amoxicillin"), so "Make it 5" means "Add 5 Amoxicillin".
                              target_med = last_search[0]
-                             return self.add_to_cart_direct(target_med, quantity=new_qty, session_id=session_id)
+                             return self.add_to_cart_direct(target_med, quantity=new_qty, session_id=session_id, user_id=user_id)
     
-                     # 2. Fallback: Update Last Added Item (Legacy behavior)
+                     # 2. Fallback: Update Last Added Item (Legacy behavior) OR DB Fallback
+                     from store.models import CartItem
                      last_added_med = context.get("last_added")
+                     
+                     # If memory is empty (server restart), try to find the latest item from DB
+                     if not last_added_med:
+                         item_query = CartItem.objects.all()
+                         if user_id:
+                             item_query = item_query.filter(user_id=user_id)
+                         elif session_id:
+                             item_query = item_query.filter(session_id=session_id)
+                         else:
+                             item_query = item_query.filter(session_id__isnull=True)
+                             
+                         # Get most recently created item
+                         latest_item = item_query.order_by('-id').first()
+                         if latest_item:
+                             last_added_med = latest_item.medicine
+
                      if last_added_med:
-                         from store.models import CartItem
                          # Find item in cart
                          item_query = CartItem.objects.filter(medicine=last_added_med)
-                         if session_id:
+                         if user_id:
+                             item_query = item_query.filter(user_id=user_id)
+                         elif session_id:
                              item_query = item_query.filter(session_id=session_id)
                          else:
                              item_query = item_query.filter(session_id__isnull=True)
@@ -440,7 +464,9 @@ class PharmacyBot:
                              item.save()
                              
                              # Recalculate Total
-                             if session_id:
+                             if user_id:
+                                 cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(user_id=user_id))
+                             elif session_id:
                                  cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
                              else:
                                  cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
@@ -454,7 +480,7 @@ class PharmacyBot:
             return "Hello! I am your Pharmacy Assistant.\n\nI can help you Check Prices, Check Stock, Process Prescriptions, or Manage your Cart (e.g. search for a medicine and just say 'Yes' to add it).\n\nHow can I help you today?"
 
         # 1.5 Service Hours & Info
-        if ("time" in text or "hour" in text or "open" in text or "close" in text or "when" in text or "available" in text or "pharmacist" in text):
+        if ("time" in text or "hour" in text or "open" in text or "close" in text or "when" in text or "available" in text or "pharmacist" in text or "timing" in text):
             return (
                 "Here are our Service Hours:\n\n"
                 "Store Hours:\n"
@@ -530,7 +556,9 @@ class PharmacyBot:
             from store.models import CartItem
             
             cart_items = []
-            if session_id:
+            if user_id:
+                cart_items = CartItem.objects.filter(user_id=user_id)
+            elif session_id:
                 cart_items = CartItem.objects.filter(session_id=session_id)
             else:
                 cart_items = CartItem.objects.filter(session_id__isnull=True)
@@ -551,10 +579,12 @@ class PharmacyBot:
 
         return "I am not sure I understood that. You can ask me to check prices, find medicines, or add items to your cart. How can I help?"
 
-    def add_to_cart_direct(self, medicine, quantity=1, session_id=None) -> str:
+    def add_to_cart_direct(self, medicine, quantity=1, session_id=None, user_id=None) -> str:
         from store.models import CartItem
         # Filter by session_id
-        if session_id:
+        if user_id:
+             item, created = CartItem.objects.get_or_create(medicine=medicine, user_id=user_id)
+        elif session_id:
             item, created = CartItem.objects.get_or_create(medicine=medicine, session_id=session_id)
         else:
             # Fallback for legacy global behavior (shouldn't happen ideally)
@@ -566,19 +596,23 @@ class PharmacyBot:
             item.quantity = quantity
         item.save()
         
-        if session_id and session_id in self.sessions:
-             self.sessions[session_id]["last_search"] = [] 
-             self.sessions[session_id]["last_added"] = medicine
+        if session_id:
+            if session_id not in self.sessions: self.sessions[session_id] = {}
+            self.sessions[session_id]["last_search"] = [] 
+            self.sessions[session_id]["last_added"] = medicine
         
         # Calculate Total for THIS SESSION
-        if session_id:
+        # Calculate Total for THIS SESSION
+        if user_id:
+             cart_Total = sum(i.get_total_price() for i in CartItem.objects.filter(user_id=user_id))
+        elif session_id:
             cart_Total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
         else:
             cart_Total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
              
         return f"{quantity} x {medicine.name} added to your cart.\n\nItem Price: ${medicine.price * quantity:.2f}\nCurrent Cart Total: ${cart_Total:.2f}"
 
-    def manage_cart(self, text: str, action: str, session_id: str = None) -> str:
+    def manage_cart(self, text: str, action: str, session_id: str = None, user_id: int = None) -> str:
         from store.models import CartItem, Medicine 
         
         words = text.split()
@@ -619,7 +653,9 @@ class PharmacyBot:
              return "I couldn't identify the medicine name to available. Please say the exact product name, e.g., 'Add Panadol to cart'."
 
         if action == "add":
-            if session_id:
+            if user_id:
+                item, created = CartItem.objects.get_or_create(medicine=target_med, user_id=user_id)
+            elif session_id:
                 item, created = CartItem.objects.get_or_create(medicine=target_med, session_id=session_id)
             else:
                 item, created = CartItem.objects.get_or_create(medicine=target_med, session_id__isnull=True)
@@ -630,11 +666,14 @@ class PharmacyBot:
                 item.quantity = quantity
             item.save()
             
-            if session_id and session_id in self.sessions:
+            if session_id:
+                if session_id not in self.sessions: self.sessions[session_id] = {}
                 self.sessions[session_id]["last_search"] = []
                 self.sessions[session_id]["last_added"] = target_med
             
-            if session_id:
+            if user_id:
+                cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(user_id=user_id))
+            elif session_id:
                 cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
             else:
                 cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))
@@ -643,7 +682,9 @@ class PharmacyBot:
             
         elif action == "remove":
             try:
-                if session_id:
+                if user_id:
+                     item = CartItem.objects.get(medicine=target_med, user_id=user_id)
+                elif session_id:
                     item = CartItem.objects.get(medicine=target_med, session_id=session_id)
                 else:
                     item = CartItem.objects.get(medicine=target_med, session_id__isnull=True)
@@ -653,7 +694,9 @@ class PharmacyBot:
                      item.quantity -= quantity
                      item.save()
                      
-                     if session_id:
+                     if user_id:
+                         cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(user_id=user_id))
+                     elif session_id:
                          cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id=session_id))
                      else:
                          cart_total = sum(i.get_total_price() for i in CartItem.objects.filter(session_id__isnull=True))

@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const lastMsg = history.length > 0 ? history[history.length - 1] : null;
 
         if (!lastMsg || !lastMsg.text.includes("Thank you for your order")) {
-            addMessage("Payment received! Thank you for your order. 📦\n\nIs there anything else I can help you with?", 'bot');
+            addMessage("Payment received! Thank you for your order. 📦\n\nA confirmation email and invoice have been sent to your inbox. 📧\n\nIs there anything else I can help you with?", 'bot');
         }
     }
 
@@ -173,9 +173,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // 2. Bold (**text**) -> <strong>text</strong>
         formatted = formatted.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
 
-        // 2.1 Fix Wall of Text: Add breaks before specific bold headers to ensure spacing
-        // We look for <strong> tags that likely represent sections (Indications, Warnings, etc)
-        formatted = formatted.replace(/([^\n>])(<strong>)/gim, '$1<br><br>$2');
+        // 2.1 Fix Wall of Text: Removed aggressive formatting that breaks lists
+        // formatted = formatted.replace(/([^\n>])(<strong>)/gim, '$1<br><br>$2');
 
         // 2.2 Specific Button Styling for "Pay Now" or "Checkout"
         // [ Pay Now ](/checkout/) -> Button

@@ -10,7 +10,7 @@ class RouterModel:
             "prescription", "store", "shop",
             "cart", "add", "remove", "basket", "medicine", "drug",
             "time", "hour", "open", "close", "when",
-            "checkout", "pay", "payment"
+            "checkout", "pay", "payment", "pharmacist", "hours", "opening"
         ]
         
         # Health Intents (informational)
@@ -28,14 +28,19 @@ class RouterModel:
             "how are you", "thank", "thanks", "bye", "goodbye", "help", "who are you",
             "who are u", "who r u", "who r you", "thx", "ty",
             "who built", "who created", "built u", "created u",
-            "super", "great", "awesome", "perfect", "cool", "nice"
+            "super", "great", "awesome", "perfect", "cool", "nice",
+            "how is life", "how's life", "hows life", "how are things", "how is it going",
+            "whats up", "what's up", "wassup"
         ]
         # Medical Context (Narrative/Advice seeking)
         self.medical_context_keywords = [
             "doctor", "prescribed", "taking", "feel", "feeling", 
             "dizzy", "hurt", "hurts", "sick", "pain", "ache",
             "medical", "advice", "should i", "start again", "stop taking",
-            "consult", "opinion", "recommend"
+            "consult", "opinion", "recommend", "can i take", "can i use",
+            "pregnant", "pregnancy", "breastfeeding", "baby", "child", "kids",
+            "son", "daughter", "toddler", "infant",
+            "safe", "safety", "reaction", "allergic"
         ]
 
     def route_query(self, message: str) -> str:
